@@ -26,3 +26,24 @@ div.tooltipAttributeList span {
 	background-repeat: no-repeat;
 	background-size: 19.6rem 2.0rem;
 }
+
+div.maxi-damage-tooltip
+{
+    display: flex;
+	flex-direction:row;
+	flex-wrap: wrap;
+	justify-content: flex-start;
+	width: 22.5rem;
+}
+
+div.maxi-damage-tooltip img {
+    width: 20px;
+    height: 20px;
+    margin-right: 0.5em;
+}
+
+div.maxi-damage-tooltip span {
+    display:flex;
+    justify-content: flex-start;
+    font-size: 1em;
+}

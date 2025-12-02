@@ -3,6 +3,137 @@ if (!("TacticalTooltip" in ::ModMaxiTooltips)) {
 }
 
 
+::ModMaxiTooltips.TacticalTooltip.getDistributionInfoMC <- function(x_min, x_max, y_min, y_max, scalar_function, threshold = null, n = null)
+{
+    // Compute information about the distribution of `scalar_function`.
+    // Assumes that `x, y` are two random variables with uniform 
+    // distribution over the intervals [x_min, x_max], [y_min, y_max]
+    // We want to find information about the distribution of scalar_function(x, y)
+    //
+    // This function computes the min, max, mean of the distribution
+    
+    if (n == null) n = 21;
+
+    n = n * n;
+
+    // Convert to float
+    x_min = 1. * x_min;
+    x_max = 1. * x_max;
+    y_min = 1. * y_min;
+    y_max = 1. * y_max;
+
+    // Generate table of values
+    local x_array = [x_min, x_min, x_max, x_max];
+    local y_array = [y_min, y_max, y_min, y_max];
+
+    for (local i = 0; i < n; i++)
+    {
+        x_array.push(::Math.rand(x_min, x_max));
+        y_array.push(::Math.rand(y_min, y_max));
+        if (i < 20) ::logError("x_array : " + x_array[i]);
+    }
+
+    // Iterate all x and y, compute values and joint weights
+    local result_array = [];
+
+    for (local idx = 0; idx < n; idx++)
+    {
+        result_array.push(
+            scalar_function(x_array[idx], y_array[idx])
+        );
+    }
+
+    local min = result_array[0];
+    local max = result_array[0];
+    local sum = 0;
+    local proba = 0;
+
+    foreach (idx, result in result_array)
+    {
+        if (result < min) min = result;
+
+        if (result > max) max = result;
+
+        sum += result * 1. / x_array.len();
+
+        if (threshold != null && result >= threshold) proba += 1. / x_array.len();
+    }
+
+    return {
+        min = min,
+        max = max,
+        mean = sum,
+        proba = proba,
+    }
+}
+
+
+::ModMaxiTooltips.TacticalTooltip.getDistributionInfo <- function(x_min, x_max, y_min, y_max, scalar_function, threshold = null)
+{
+    // Compute information about the distribution of `scalar_function`.
+    // Assumes that `x, y` are two random variables with uniform 
+    // distribution over the intervals [x_min, x_max], [y_min, y_max]
+    // We want to find information about the distribution of scalar_function(x, y)
+    //
+    // This function computes the min, max, mean of the distribution
+    
+    // Generate array of values
+    local x_array = [];
+    local y_array = [];
+    local marginal_weight_array = [];
+
+    local n = x_max - x_min + 1;
+    {
+        for (local i = x_min; i <= x_max; i++)
+        {
+            x_array.push(i);
+            y_array.push(i);
+            marginal_weight_array.push(1. / n);
+        }
+    }
+
+    // Iterate all x and y, compute values and joint weights
+    local result_array = [];
+    local joint_weight_array = [];
+
+    for (local idx = 0; idx < n; idx++)
+    {
+        for (local jdx = 0; jdx < n; jdx++)
+        {
+            result_array.push(
+                scalar_function(x_array[idx], y_array[jdx])
+            );
+            joint_weight_array.push(
+                marginal_weight_array[idx] * marginal_weight_array[jdx]
+            );
+        }
+    }
+
+    local min = result_array[0];
+    local max = result_array[0];
+    local sum = 0;
+    local proba = 0;
+
+    foreach (idx, result in result_array)
+    {
+        if (result < min) min = result;
+
+        if (result > max) max = result;
+
+        sum += result * joint_weight_array[idx];
+
+        if (threshold != null && result >= threshold) proba += joint_weight_array[idx];
+    }
+
+    return {
+        min = min,
+        max = max,
+        mean = sum,
+        proba = proba,
+    }
+}
+
+
 local function damageFromRolls(armor_roll, health_roll, body_part_hit, skill, attacker, target){
     local properties = skill.m.Container.buildPropertiesForUse(skill, target);
 
@@ -95,87 +226,163 @@ local function damageFromRolls(armor_roll, health_roll, body_part_hit, skill, at
     local properties = skill.m.Container.buildPropertiesForUse(skill, target);
 
     local head_hit_chance = properties.getHitchance(::Const.BodyPart.Head);
-    
-    local armor_roll = ::Math.rand(properties.DamageRegularMin, properties.DamageRegularMax);
-    local health_roll = ::Math.rand(properties.DamageRegularMin, properties.DamageRegularMax);
-
-    local body_part_hit = ::Const.BodyPart.Body;
-
     local res_min_body = damageFromRolls(properties.DamageRegularMin, properties.DamageRegularMin, ::Const.BodyPart.Body, skill, attacker, target);
-    local res_max_body = damageFromRolls(properties.DamageRegularMax, properties.DamageRegularMax, ::Const.BodyPart.Body, skill, attacker, target);
 
-    local res_min_head = damageFromRolls(properties.DamageRegularMin, properties.DamageRegularMin, ::Const.BodyPart.Head, skill, attacker, target);
-    local res_max_head = damageFromRolls(properties.DamageRegularMax, properties.DamageRegularMax, ::Const.BodyPart.Head, skill, attacker, target);
+    local hit_info = clone ::Const.Tactical.HitInfo;
+    local other_properties = target.m.Skills.buildPropertiesForBeingHit(attacker, skill, hit_info);
 
+    local body_armor = other_properties.Armor[::Const.BodyPart.Body] * other_properties.ArmorMult[::Const.BodyPart.Body];
+    local head_armor = other_properties.Armor[::Const.BodyPart.Head] * other_properties.ArmorMult[::Const.BodyPart.Head];
+    local health = target.m.Hitpoints;
+
+    local function curried_damage_body_armor(x, y) {
+        return damageFromRolls(x, y, ::Const.BodyPart.Body, skill, attacker, target).DamageInflictedArmor
+    }
+    local function  curried_damage_body_health(x, y) {
+        return damageFromRolls(x, y, ::Const.BodyPart.Body, skill, attacker, target).DamageInflictedHitpoints
+    }
+    local function  curried_damage_head_armor(x, y) {
+        return damageFromRolls(x, y, ::Const.BodyPart.Head, skill, attacker, target).DamageInflictedArmor
+    }
+    local function  curried_damage_head_health(x, y) {
+        return damageFromRolls(x, y, ::Const.BodyPart.Head, skill, attacker, target).DamageInflictedHitpoints
+    }
+
+    local distribution_body_armor = ::ModMaxiTooltips.TacticalTooltip.getDistributionInfo(
+        properties.DamageRegularMin, properties.DamageRegularMax,
+        properties.DamageRegularMin, properties.DamageRegularMax,
+        curried_damage_body_armor,
+        body_armor
+    );
+    local distribution_body_health = ::ModMaxiTooltips.TacticalTooltip.getDistributionInfo(
+        properties.DamageRegularMin, properties.DamageRegularMax,
+        properties.DamageRegularMin, properties.DamageRegularMax,
+        curried_damage_body_health,
+        health
+    );
+    local distribution_head_armor = ::ModMaxiTooltips.TacticalTooltip.getDistributionInfo(
+        properties.DamageRegularMin, properties.DamageRegularMax,
+        properties.DamageRegularMin, properties.DamageRegularMax,
+        curried_damage_head_armor,
+        head_armor
+    );
+    local distribution_head_health = ::ModMaxiTooltips.TacticalTooltip.getDistributionInfo(
+        properties.DamageRegularMin, properties.DamageRegularMax,
+        properties.DamageRegularMin, properties.DamageRegularMax,
+        curried_damage_head_health,
+        health
+    );
+
+    local kill_proba = (head_hit_chance * distribution_head_health.proba + (100 - head_hit_chance) * distribution_body_health.proba);
+    
     local ret = {
         head_hit_chance = head_hit_chance,
+        kill_proba = kill_proba,
 
-        body_damage_mult = res_min_body.BodyDamageMult,
-        head_damage_mult = res_min_head.BodyDamageMult,
+        target = {
+            health = health,
+            body_armor = body_armor,
+            head_armor = head_armor,
+        }
 
-        min_body_ad = res_min_body.DamageInflictedArmor,
-        min_body_hd = res_min_body.DamageInflictedHitpoints,
-
-        max_body_ad = res_max_body.DamageInflictedArmor,
-        max_body_hd = res_max_body.DamageInflictedHitpoints,
-
-        min_head_ad = res_min_head.DamageInflictedArmor,
-        min_head_hd = res_min_head.DamageInflictedHitpoints,
-
-        max_head_ad = res_max_head.DamageInflictedArmor,
-        max_head_hd = res_max_head.DamageInflictedHitpoints,
+        distribution_body_armor = distribution_body_armor,
+        distribution_body_health = distribution_body_health,
+        distribution_head_armor = distribution_head_armor,
+        distribution_head_health = distribution_head_health,
     }
 
     return ret
 }
 
-local function icon_and_text(icon_path, value, other_value = null) {
-    local text = format("<span> <img src='coui://gfx/ui/icons/%s'/>  %i </span>", icon_path, value);
-    if (other_value != null && other_value != value){
-        text = format("<span> <img src='coui://gfx/ui/icons/%s'/>  %i - %i </span>", icon_path, value, other_value);
+
+local function tooltip_fragment(icon_name, values, max = null) {
+    local join = "";
+    foreach(idx,val in values) {
+        local val_str;
+        if (typeof val == "float" && (10 * val) % 10 != 0 && val < 100) {
+            val_str = format("<b>%2.1f</b>", val);
+        } else {
+            val_str = format("<b>%i</b>", ::Math.round(val));
+        }
+        if (max != null && val >= max) {
+            val_str = "<b>" + val_str + "</b>";
+        }
+
+        join += val_str;
+        if (idx < values.len() - 1) {
+            join += " - ";
+        }
     }
-    return text 
+
+    return format("<img src='coui://gfx/ui/icons/%s'/> <span> %s </span>", icon_name, join)
+}
+
+
+local function tooltip_fragment_from_distribution(icon_name, distribution_info, max = null) {
+    local values = [distribution_info.min, distribution_info.mean, distribution_info.max];
+    return tooltip_fragment(icon_name, values, max)
 }
 
 
 ::ModMaxiTooltips.TacticalTooltip.attack_info_tooltip <- function(attacker, target, skill){
     local info = ::ModMaxiTooltips.TacticalTooltip.attack_info_summary(attacker, target, skill)
 
-    ::logWarning("MaxiTT: attack_info_summary");
-    ::MSU.Log.printData(info);
+    ::logError("MaxiTT: attack_info_tooltip; info = ");
+    ::MSU.Log.printData(info, 2);
 
-    local tooltip = []
+    local tooltip = [];
 
-    if (info.head_hit_chance > 0) {
-        local text_head = icon_and_text("chance_to_hit_head.png", info.head_hit_chance);
-        if (info.max_head_ad > 0) {
-            text_head = text_head + icon_and_text("armor_damage.png", info.min_head_ad, info.max_head_ad);
-        }
-        if (info.max_head_hd) {
-            text_head = text_head + icon_and_text("regular_damage.png", info.min_head_hd, info.max_head_hd);
-        }
+    {
+        local target_text = "<div class='maxi-damage-tooltip'>";
+        target_text += tooltip_fragment("health.png", [info.target.health]);
+        target_text += tooltip_fragment("armor_head.png", [info.target.head_armor]);
+        target_text += tooltip_fragment("armor_body.png", [info.target.body_armor]);
+        target_text += "</div>";
+        tooltip.push({
+            type = "text",
+            text = target_text,
+            rawHTMLInText = true
+        })
+    }
+
+    {
+        local text_head = "<div class='maxi-damage-tooltip'>";
+        text_head += tooltip_fragment_from_distribution("regular_damage.png", info.distribution_head_health, info.target.health);
+        text_head += tooltip_fragment_from_distribution("armor_damage.png", info.distribution_head_armor, info.target.head_armor);
+        text_head += tooltip_fragment("chance_to_hit_head.png", [info.head_hit_chance]);
+        text_head += "</div>"
+
         tooltip.push({
             type = "text",
             text = text_head,
             rawHTMLInText = true
         })
     }
+    
+    {
+        local text_body = "<div class='maxi-damage-tooltip'>";
+        text_body += tooltip_fragment_from_distribution("regular_damage.png", info.distribution_body_health, info.target.health);
+        text_body += tooltip_fragment_from_distribution("armor_damage.png", info.distribution_body_armor, info.target.body_armor);
+        text_body += tooltip_fragment("hitchance.png", [100 - info.head_hit_chance]);
+        text_body += "</div>"
 
-    local text_body = "";
-    if ((100 - info.head_hit_chance) > 0) {
-        text_body = text_body + icon_and_text("hitchance.png", 100 - info.head_hit_chance);
+        tooltip.push({
+            type = "text",
+            text = text_body,
+            rawHTMLInText = true
+        })
     }
-    if (info.max_head_ad > 0 && info.body_damage_mult != info.head_damage_mult) {
-        text_body = text_body + icon_and_text("armor_damage.png", info.min_body_ad, info.max_body_ad);
+
+    {
+        local text_kill = "<div class='maxi-damage-tooltip'>";
+        text_kill += tooltip_fragment("kills.png", [info.kill_proba]);
+        text_kill += "</div>"
+        tooltip.push({
+            type = "text",
+            text = text_kill,
+            rawHTMLInText = true
+        })
     }
-    if (info.max_head_hd && info.body_damage_mult != info.head_damage_mult) {
-        text_body = text_body + icon_and_text("regular_damage.png", info.min_body_hd, info.max_body_hd);
-    }
-    tooltip.push({
-        type = "text",
-        text = text_body,
-        rawHTMLInText = true
-    })
 
     return tooltip
 }
