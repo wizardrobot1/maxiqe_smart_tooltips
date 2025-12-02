@@ -4,18 +4,34 @@
 
 - MSU: enable RawHtml in all tooltips
 
-- damage distribution:
+- improve tooltip with css:
+    - spacing
+    - reduced size
+
+- x clip health-damage to current health
+- x optimize tooltip:
+    - x don't show armor when it is 0
+    - x collapse to single value when identical
+    - x collapse to duo when mean is roughly in the middle
+    - x show single line when damage is same from head and body and both armors are 0 
+
+- x improve tooltip: bold values, single value
+- x damage distribution:
     - compute a grid of values for the rolls
     - compute the associated values
     - half-weight on edges, normal weight everywhere else
     - compute mean
-- clip health-damage to current health
-- damage information:
+- x damage information:
     - min, max, is_min_saturated, is_max_saturated, mean
-- improve tooltip: bold values, single value
-- improve tooltip with css:
-    - spacing
-    - reduced size
+
+## Tests
+
+Use the combat simulator mod from taro
+
+- Test weapons with the highest range and benchmark the time it takes to compute the damage info
+- Test weapons with the Gash skill: do they spam the sound? I think they will
+- Test weapons with split man
+- Test the multi-hit weapons
 
 ## Reference
 

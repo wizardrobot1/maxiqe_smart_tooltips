@@ -215,6 +215,10 @@ local function damageFromRolls(armor_roll, health_roll, body_part_hit, skill, at
 
     damage = damage * hit_info.BodyDamageMult;
     damage = ::Math.max(0, ::Math.max(::Math.round(damage), ::Math.min(::Math.round(hit_info.DamageMinimum), ::Math.round(hit_info.DamageMinimum * other_properties.DamageReceivedTotalMult))));
+
+    // clip health damage at current health
+    damage = ::Math.min(damage, target.m.Hitpoints);
+
     hit_info.DamageInflictedHitpoints = damage;
 
     return hit_info
@@ -299,7 +303,7 @@ local function tooltip_fragment(icon_name, values, max = null) {
     local join = "";
     foreach(idx,val in values) {
         local val_str;
-        if (typeof val == "float" && (10 * val) % 10 != 0 && val < 100) {
+        if (typeof val == "float" && (10 * val) % 10 != 0) {
             val_str = format("<b>%2.1f</b>", val);
         } else {
             val_str = format("<b>%i</b>", ::Math.round(val));
@@ -314,21 +318,55 @@ local function tooltip_fragment(icon_name, values, max = null) {
         }
     }
 
-    return format("<img src='coui://gfx/ui/icons/%s'/> <span> %s </span>", icon_name, join)
+    return format("<span> <img src='coui://gfx/ui/icons/%s'/> %s </span>", icon_name, join)
 }
 
 
 local function tooltip_fragment_from_distribution(icon_name, distribution_info, max = null) {
-    local values = [distribution_info.min, distribution_info.mean, distribution_info.max];
+    // If the range of values is small, show mean as float
+    // If it is large, round the mean: we can ignore the digits
+    local range = distribution_info.max - distribution_info.min;
+    if (range > 5) distribution_info.mean = ::Math.round(distribution_info.mean);
+
+    // If the mean is roughly in the middle of the range, don't show it
+    local middle = 1. * (distribution_info.max + distribution_info.min) / 2.;
+    local show_mean = (middle - 0.1 * range < distribution_info.mean && distribution_info.mean < middle + 0.1 * range);
+
+    local values = [distribution_info.min, distribution_info.max];
+    if (show_mean) values = [distribution_info.min, distribution_info.mean, distribution_info.max];
+
+    // If all 3 values are identical, show only a single one
+    if (range == 0) values = [distribution_info.min];
+
     return tooltip_fragment(icon_name, values, max)
 }
 
 
-::ModMaxiTooltips.TacticalTooltip.attack_info_tooltip <- function(attacker, target, skill){
-    local info = ::ModMaxiTooltips.TacticalTooltip.attack_info_summary(attacker, target, skill)
+local function is_close(value1, value2)
+{
+    return (value1 - value2 <= 0.01) && (value2 - value1 <= 0.01)
+}
 
-    ::logError("MaxiTT: attack_info_tooltip; info = ");
-    ::MSU.Log.printData(info, 2);
+local function tablesAreEqual(table1, table2) {
+    // Check if both inputs are tables
+    foreach (key, value in table1) {
+        if (!table2.rawin(key) || !is_close(table1[key], table2[key]) ) {
+            return false;
+        }
+    }
+    return true;
+}
+
+
+::ModMaxiTooltips.TacticalTooltip.attack_info_tooltip <- function(attacker, target, skill){
+    local info = ::ModMaxiTooltips.TacticalTooltip.attack_info_summary(attacker, target, skill);
+
+    // Show a single damage line: taking from body
+    local show_single_line = (
+        info.target.head_armor == 0
+        && info.target.body_armor == 0
+        && tablesAreEqual(info.distribution_head_health, info.distribution_body_health)
+    );
 
     local tooltip = [];
 
@@ -345,10 +383,23 @@ local function tooltip_fragment_from_distribution(icon_name, distribution_info, 
         })
     }
 
-    {
+    // Show a single damage line: taking from body
+    if (show_single_line) {
+        local text_body = "<div class='maxi-damage-tooltip'>";
+        text_body += tooltip_fragment_from_distribution("regular_damage.png", info.distribution_body_health, info.target.health);
+        if (info.distribution_body_armor.max > 0) text_body += tooltip_fragment_from_distribution("armor_damage.png", info.distribution_body_armor, info.target.body_armor);
+        text_body += tooltip_fragment("hitchance.png", [100]);
+        text_body += "</div>"
+
+        tooltip.push({
+            type = "text",
+            text = text_body,
+            rawHTMLInText = true
+        })
+    } else {
         local text_head = "<div class='maxi-damage-tooltip'>";
         text_head += tooltip_fragment_from_distribution("regular_damage.png", info.distribution_head_health, info.target.health);
-        text_head += tooltip_fragment_from_distribution("armor_damage.png", info.distribution_head_armor, info.target.head_armor);
+        if (info.distribution_head_armor.max > 0) text_head += tooltip_fragment_from_distribution("armor_damage.png", info.distribution_head_armor, info.target.head_armor);
         text_head += tooltip_fragment("chance_to_hit_head.png", [info.head_hit_chance]);
         text_head += "</div>"
 
@@ -357,12 +408,10 @@ local function tooltip_fragment_from_distribution(icon_name, distribution_info, 
             text = text_head,
             rawHTMLInText = true
         })
-    }
-    
-    {
+
         local text_body = "<div class='maxi-damage-tooltip'>";
         text_body += tooltip_fragment_from_distribution("regular_damage.png", info.distribution_body_health, info.target.health);
-        text_body += tooltip_fragment_from_distribution("armor_damage.png", info.distribution_body_armor, info.target.body_armor);
+        if (info.distribution_body_armor.max > 0) text_body += tooltip_fragment_from_distribution("armor_damage.png", info.distribution_body_armor, info.target.body_armor);
         text_body += tooltip_fragment("hitchance.png", [100 - info.head_hit_chance]);
         text_body += "</div>"
 

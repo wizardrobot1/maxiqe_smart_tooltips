@@ -34,6 +34,7 @@ TooltipModule.prototype.addHeaderTextDiv = function(_parentDIV, _data)
 	if (ret === null || _data.rawHTMLInText !== true )
 		return ret;
 	this.rf_unescapeTagsOnElement(ret.find(".text:first"));
+    
 	return ret;
 };
 

@@ -43,7 +43,9 @@ div.maxi-damage-tooltip img {
 }
 
 div.maxi-damage-tooltip span {
+    width: 7rem;
     display:flex;
     justify-content: flex-start;
-    font-size: 1em;
+    flex-shrink: 1;
+    font-size: 14px;
 }
