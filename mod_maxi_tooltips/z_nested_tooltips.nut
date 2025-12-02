@@ -11,6 +11,11 @@ local getThresholdForInjury = function( _script )
 local tooltipImageKeywords = {
 	"ui/icons/maxi_tt_kill_given_hit.png" : "Concept.KillGivenHit",
 	"ui/icons/maxi_tt_marginal_kill.png"  : "Concept.MarginalKill",
+
+	"ui/icons/maxi_tt_mean_health_damage.png"  : "Concept.MeanHealthDamage",
+	"ui/icons/maxi_tt_mean_armor_damage.png"  : "Concept.MeanArmorDamage",
+	"ui/icons/maxi_tt_head_hit_chance.png"  : "Concept.MaxiHeadHitChance",
+	"ui/icons/maxi_tt_body_hit_chance.png"  : "Concept.MaxiBodyHitChance",
 }
 
 ::ModMaxiTooltips.Mod.Tooltips.setTooltipImageKeywords(tooltipImageKeywords);
@@ -95,6 +100,12 @@ local tooltipImageKeywords = {
 	::MSU.Table.merge(::ModMaxiTooltips.NestedTooltips.Tooltips.Concept, {
         KillGivenHit = ::MSU.Class.BasicTooltip("Kill chance if hit", "Percent chance of this attack killing its target if it hits."),
         MarginalKill = ::MSU.Class.BasicTooltip("Overall kill chance", "Percent chance of this attack killing its target, factoring in the hit chance. For example, if the hitchance is 80% and the 'kill chance if hit' is 50%, the 'overall kill chance' is 40%."),
+        
+        MeanHealthDamage = ::MSU.Class.BasicTooltip("Average health damage", "Average health damage dealt by this attack if it hits."),
+        MeanArmorDamage = ::MSU.Class.BasicTooltip("Average armor damage", "Average armor damage dealt by this attack if it hits."),
+        MaxiHeadHitChance = ::MSU.Class.BasicTooltip("Head hit chance", "Percent chance of this attack hitting the head. Damage information on this line corresponds to an attack hitting the enemy's head."),
+        MaxiBodyHitChance = ::MSU.Class.BasicTooltip("Head hit chance", "Percent chance of this attack hitting the body. Damage information on this line corresponds to an attack hitting the enemy's body."),
+
 		Disabled = ::MSU.Class.BasicTooltip("Disabled", ::ModMaxiTooltips.Mod.Tooltips.parseString("A disabled character is unable to act and will skip their [turn|Concept.Turn].\n\nExamples of [effects|Concept.StatusEffect] which can cause a character to become disabled include [Stunned|Skill+stunned_effect] and [Sleeping.|Skill+sleeping_effect]")),
 		Rooted = ::MSU.Class.BasicTooltip("Rooted", ::ModMaxiTooltips.Mod.Tooltips.parseString("A rooted character is stuck in place - unable to move or be moved from their position.\n\nExamples of [effects|Concept.StatusEffect] which can cause a character to become rooted include [Trapped in Net|Skill+net_effect] and [Trapped in Web.|Skill+web_effect]")),
 		Wait = ::MSU.Class.BasicTooltip("Wait", ::ModMaxiTooltips.Mod.Tooltips.parseString(format("If you are not the last character in the [turn order|Concept.Turn] in a [round,|Concept.Round] you may use the Wait action. This moves you to the end of the current [turn order,|Concept.Turn] allowing you to act again before the end of the [round.|Concept.Round]\n\nYou can only use Wait once per [turn.|Concept.Turn]%s", ::Const.CharacterProperties.InitiativeAfterWaitMult == 1.0 ? "" : "\n\nUsing Wait causes your [turn order|Concept.Turn] in the next [round|Concept.Round] to be calculated with " + ::MSU.Text.colorizeMult(::Const.CharacterProperties.InitiativeAfterWaitMult) + " " + (::Const.CharacterProperties.InitiativeAfterWaitMult > 1.0 ? "more" : "less") + " [Initiative.|Concept.Initiative]"))),
