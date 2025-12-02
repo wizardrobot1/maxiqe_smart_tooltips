@@ -1,0 +1,19 @@
+div.tooltipAttributeList {
+    display: flex;
+	flex-direction:row;
+	flex-wrap: wrap;
+	justify-content: space-between;
+	width: 22.5rem;
+}
+
+div.tooltipAttributeList img {
+    width: 20px;
+    height: 20px;
+}
+
+div.tooltipAttributeList span {
+    width: 7rem;
+    display:flex;
+    justify-content: flex-start;
+    flex-shrink: 1;
+}
