@@ -213,8 +213,8 @@ if (!("TacticalTooltip" in ::ModMaxiTooltips)) {
 
     local kill_chance = (head_hit_chance * summary_res.head.kill_proba + (100 - head_hit_chance) * summary_res.body.kill_proba);
 
-    local hitchance = skill.getHitchance(target);
-    local marginal_kill_chance = kill_chance * hitchance / 100;
+    local raw_hit_chance = skill.getHitchance(target);
+    local marginal_kill_chance = kill_chance * raw_hit_chance / 100;
 
     return {
         body=summary_res["body"],
@@ -277,11 +277,11 @@ local function compute_hit_distribution(hitchance, num_attacks) {
 ::ModMaxiTooltips.TacticalTooltip.multi_hit_summary__monte_carlo <- function (attacker, target, skill) {
     local rng = ::ModMaxiTooltips.TacticalTooltip.CustomRNG(123456);
 
-    local hitchance = skill.getHitchance(target);
+    local raw_hit_chance = skill.getHitchance(target);
     local head_hit_chance = ::ModMaxiTooltips.TacticalTooltip.compute_head_hit_chance(attacker, target, skill);
 
     local num_attacks = ::ModMaxiTooltips.TacticalTooltip.get_number_of_attacks(skill);
-    local hit_distribution = compute_hit_distribution(hitchance, num_attacks);
+    local hit_distribution = compute_hit_distribution(raw_hit_chance, num_attacks);
 
     local parameters_head = ::ModMaxiTooltips.TacticalTooltip.compute_parameters_from_attack(attacker, target, skill, ::Const.BodyPart.Head);
     local parameters_body = ::ModMaxiTooltips.TacticalTooltip.compute_parameters_from_attack(attacker, target, skill, ::Const.BodyPart.Body);
@@ -311,7 +311,7 @@ local function compute_hit_distribution(hitchance, num_attacks) {
         kill_proba[key] <- ::ModMaxiTooltips.TacticalTooltip.MeanCalculator();
     }
 
-    local num_repeats = ::ModMaxiTooltips.Mod.ModSettings.getSetting("num_samples_monte_carlo").getValue();
+    local num_repeats = 2 * ::ModMaxiTooltips.Mod.ModSettings.getSetting("num_samples_monte_carlo").getValue();
 
     for (local repeat = 0; repeat < num_repeats; repeat++) {
         // Reset health and armor
@@ -381,7 +381,8 @@ local function compute_hit_distribution(hitchance, num_attacks) {
             kill_proba=kill_proba[num_hits].value(),
             hit_chance=hit_chance
         });
-        marginal_kill_chance = marginal_kill_chance + hit_chance;
+        local marginal_kill_chance_increment = kill_proba[num_hits].value() * hit_chance;
+        marginal_kill_chance = marginal_kill_chance + marginal_kill_chance_increment;
     }
 
     foreach (key in ["body", "head"]) {

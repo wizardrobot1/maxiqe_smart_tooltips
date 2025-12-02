@@ -2,7 +2,8 @@
 
 local tooltipImageKeywords = {
 	// attack_info_tooltip__kill_chance
-	"ui/icons/maxi_tt_kill_given_hit.png" : "Concept.KillGivenHit",
+	"ui/icons/maxi_tt_overall_kill_given_hit.png" : "Concept.OverallKillGivenHit",
+	"ui/icons/maxi_tt_kill_given_hit.png" : "Concept.LineKillGivenHit",
 	"ui/icons/maxi_tt_marginal_kill.png"  : "Concept.MarginalKill",
 
 	// attack_info_tooltip_line_5
@@ -123,20 +124,21 @@ local getThresholdForInjury = function( _script )
 
 	::MSU.Table.merge(::ModMaxiTooltips.NestedTooltips.Tooltips.Concept, {
 		// New concepts for the damage estimation tooltip
-        KillGivenHit = ::MSU.Class.BasicTooltip("Kill chance if hit", "Chance of this attack killing its target if it hits."),
-        MarginalKill = ::MSU.Class.BasicTooltip("Overall kill chance", "Chance of this attack killing its target, factoring in the hit chance. For example, if the hitchance is 80% and the 'kill chance if hit' is 50%, the 'overall kill chance' is 40%."),
+        OverallKillGivenHit = ::MSU.Class.BasicTooltip("Overall kill chance if hit", "Overall chance of this attack killing its target if it hits, averaged over possible hit types."),
+        LineKillGivenHit = ::MSU.Class.BasicTooltip("Kill chance if hit", "Chance of this attack killing its target if it hits with this precise hit."),
+        MarginalKill = ::MSU.Class.BasicTooltip("Overall kill chance", "Chance of this attack killing its target, factoring in the hit chance. For example, if the hitchance is 80% and the 'overall kill chance if hit' is 50%, the 'overall kill chance' is 40%."),
 
-        MeanHealthDamage = ::MSU.Class.BasicTooltip("Average health damage", "Average health damage."),
-        MeanHeadArmorDamage = ::MSU.Class.BasicTooltip("Average head armor damage", "Average head armor damage."),
-        MeanBodyArmorDamage = ::MSU.Class.BasicTooltip("Average body armor damage", "Average body armor damage."),
+        MeanHealthDamage = ::MSU.Class.BasicTooltip("Average health damage", ""),
+        MeanHeadArmorDamage = ::MSU.Class.BasicTooltip("Average head armor damage", ""),
+        MeanBodyArmorDamage = ::MSU.Class.BasicTooltip("Average body armor damage", ""),
 
 		MaxiGenericHitChance = ::MSU.Class.BasicTooltip("Hit chance", "Chance of this attack hitting the enemy, and corresponding damage information."),
 
 		MaxiHeadHitChance = ::MSU.Class.BasicTooltip("Head hit chance", "Chance of this attack hitting the head, and corresponding damage information."),
         MaxiBodyHitChance = ::MSU.Class.BasicTooltip("Body hit chance", "Chance of this attack hitting the body, and corresponding damage information."),
 
-		MaxiMultiHitHeadHitChance = ::MSU.Class.BasicTooltip("Head hit chance", "Chance of a single hit to the head, and corresponding damage information."),
-        MaxiMultiHitBodyHitChance = ::MSU.Class.BasicTooltip("Body hit chance", "Chance of a single hit to the body, and corresponding damage information."),
+		MaxiMultiHitHeadHitChance = ::MSU.Class.BasicTooltip("Chance of single head hit", "Chance of a single hit to the head, and corresponding damage information."),
+        MaxiMultiHitBodyHitChance = ::MSU.Class.BasicTooltip("Change of single body hit", "Chance of a single hit to the body, and corresponding damage information."),
         MaxiMultiHitZeroHitChance = ::MSU.Class.BasicTooltip("Chance of zero hits", "Chance of zero hits, and corresponding damage information."),
         MaxiMultiHitOneHitChance = ::MSU.Class.BasicTooltip("Chance of one hit", "Chance of one hit, and corresponding damage information."),
         MaxiMultiHitTwoHitChance = ::MSU.Class.BasicTooltip("Chance of two hits", "Chance of two hits, and corresponding damage information."),

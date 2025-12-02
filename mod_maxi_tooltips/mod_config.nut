@@ -17,13 +17,10 @@ tacticalTooltipPage.addBooleanSetting("ShowStatusPerkAndEffect", true, "Show Sta
 tacticalTooltipPage.addBooleanSetting("HeaderForEmptyCategories", false, "Show Header for empty categories");
 
 // New settings
-// tacticalTooltipPage.addRangeSetting("num_samples_total", 100, 50, 1000, 10, "Total calculation cost", "Decrease this number if the tooltips are lagging. Increase it if you want more precise results.");
-// tacticalTooltipPage.addRangeSetting("num_samples_armor", 8, 5, 20, 1, "Armor damage calculation cost", "Don't touch this unless you know what you are doing ;-)");
-// tacticalTooltipPage.addRangeSetting("num_samples_monte_carlo", 100, 50, 1000, 50, "Monte-Carlo calculation cost", "This parameter is only used for split-man and multi-hit attacks! Decrease this number if the tooltips are lagging. Increase it if you want more precise results.");
 
 tacticalTooltipPage.addBooleanSetting("clip_health_damage", false, "Clip damage to enemy health", "When this is activated, damage prediction is clipped at enemy health.");
-tacticalTooltipPage.addBooleanSetting("clip_armor_damage", false, "Clip damage to enemy armor", "When this is activated, damage prediction is clipped at enemy armor.");
+tacticalTooltipPage.addBooleanSetting("clip_armor_damage", true, "Clip damage to enemy armor", "When this is activated, damage prediction is clipped at enemy armor.");
 
 tacticalTooltipPage.addRangeSetting("num_samples_total", 500, 50, 1000, 10, "Total calculation cost", "Decrease this number if the tooltips are lagging. Increase it if you want more precise results.");
 tacticalTooltipPage.addRangeSetting("num_samples_armor", 10, 5, 20, 1, "Armor damage calculation cost", "Don't touch this unless you know what you are doing ;-)");
-tacticalTooltipPage.addRangeSetting("num_samples_monte_carlo", 1000, 50, 5000, 50, "Monte-Carlo calculation cost", "This parameter is only used for split-man and multi-hit attacks! Decrease this number if the tooltips are lagging. Increase it if you want more precise results.");
+tacticalTooltipPage.addRangeSetting("num_samples_monte_carlo", 500, 50, 5000, 50, "Monte-Carlo calculation cost", "This parameter is only used for split-man and multi-hit attacks! Decrease this number if the tooltips are lagging. Increase it if you want more precise results.");

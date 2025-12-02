@@ -45,7 +45,7 @@ local function attack_info_tooltip__kill_chance(conditional_kill_proba, marginal
 {
     local text_kill = "<div class='maxi-damage-tooltip'>";
     if (conditional_kill_proba) {
-        text_kill += tooltip_fragment("maxi_tt_kill_given_hit.png", conditional_kill_proba);
+        text_kill += tooltip_fragment("maxi_tt_overall_kill_given_hit.png", conditional_kill_proba);
     } else {
         text_kill += missing_value();
     }
@@ -71,8 +71,8 @@ local function attack_info_tooltip__kill_chance(conditional_kill_proba, marginal
 // hitchance_icon: str
 local function attack_info_tooltip_line_5(info, hitchance_icon)
 {
-    local kill_proba = info.health_damage;
-    local health_value = info.body_armor_damage;
+    local kill_proba = info.kill_proba;
+    local health_value = info.health_damage;
     local head_armor = info.head_armor_damage;
     local body_armor = info.body_armor_damage;
     local hitchance = info.hit_chance;
@@ -133,11 +133,7 @@ local function attack_info_tooltip_line_5(info, hitchance_icon)
 
 local function attack_info_tooltip__calculation_time(time, name)
 {
-    return {
-        type = "text",
-        text = "<div> " + tooltip_fragment("maxi_tt_calculation_time.png", time) + "ms </div>",
-        rawHTMLInText = true
-    }
+    return "<div class='maxi-damage-tooltip'>" + tooltip_fragment("maxi_tt_calculation_time.png", time) + "</div>"
 }
 
 
@@ -149,10 +145,11 @@ local function tooltip_from_info(info, calculation_time, info_keys, icons)
     // TODO: only debug mode
     tooltip.push({
             type = "text",
-            text = attack_info_tooltip__calculation_time(calculation_time, "Calculation time")
+            text = attack_info_tooltip__calculation_time(calculation_time, "Calculation time"),
+            rawHTMLInText = true
     })
 
-    if (info.kill_chance >= 1)
+    if (info.marginal_kill_chance >= 1)
     {
         tooltip.push({
             type = "text",
@@ -184,11 +181,13 @@ local function tooltip_from_info(info, calculation_time, info_keys, icons)
     } else {
         // Standard multiline tooltip
         foreach (idx, key in info_keys) {
-            tooltip.push({
-                type = "text",
-                text =  attack_info_tooltip_line_5(info[key], icons[idx]),
-                rawHTMLInText = true
-            })
+            if (info[key].hit_chance >= 1) {
+                tooltip.push({
+                    type = "text",
+                    text =  attack_info_tooltip_line_5(info[key], icons[idx]),
+                    rawHTMLInText = true
+                })
+            }
         }
 
     }
@@ -202,45 +201,35 @@ local function tooltip_from_info(info, calculation_time, info_keys, icons)
     local info;
     local info_keys;
     local icons;
+    local calculation_time;
+    local tooltip = [];
 
     local num_attacks = ::ModMaxiTooltips.TacticalTooltip.get_number_of_attacks(skill);
 
-    ::MSU.Utils.Timer("maxi tt timer");
-
-    if (skill.getID() == "actives.split_man") {
-        info = ::ModMaxiTooltips.TacticalTooltip.split_man_summary__monte_carlo(attacker, target, skill);
-        info_keys = ["head", "body"];
-        icons = ["maxi_tt_splitman_head_hit_chance.png", "maxi_tt_splitman_body_hit_chance.png"];
-    } else if (num_attacks >= 2) {
-        info = ::ModMaxiTooltips.TacticalTooltip.multi_hit_summary__monte_carlo(attacker, target, skill);
-        info_keys = ["head", "body"];
-        icons = ["maxi_tt_multihit_head_hit_chance.png", "maxi_tt_multihit_body_hit_chance.png", "maxi_tt_num_hits_2_hit_chance.png", "maxi_tt_num_hits_3_hit_chance.png"];
-        for (local num_hits = 1; num_hits < num_attacks; num_hits++) {
-            info_keys.push(num_hits);
-        }
-    } else {
-        info = ::ModMaxiTooltips.TacticalTooltip.attack_info_summary_from_parameters__smartfast(attacker, target, skill);
-        info_keys = ["head", "body"];
-        icons = ["maxi_tt_head_hit_chance.png", "maxi_tt_body_hit_chance.png"];
-    }
-
-    local calculation_time = ::MSU.Utils.Timer("maxi tt timer").silentStop();
-
-    local tooltip = tooltip_from_info(info, calculation_time, info_keys, icons);
-
-    // TODO: If debug instead
-    if (true) {
+    {
         ::MSU.Utils.Timer("maxi tt timer");
 
-        info = ::ModMaxiTooltips.TacticalTooltip.multi_hit_summary__monte_carlo(attacker, target, skill);
-        info_keys = ["head", "body"];
-        icons = ["maxi_tt_head_hit_chance.png", "maxi_tt_body_hit_chance.png"];
+        if (skill.getID() == "actives.split_man") {
+            info = ::ModMaxiTooltips.TacticalTooltip.split_man_summary__monte_carlo(attacker, target, skill);
+            info_keys = ["head", "body"];
+            icons = ["maxi_tt_splitman_head_hit_chance.png", "maxi_tt_splitman_body_hit_chance.png"];
+        } else if (num_attacks >= 2) {
+            info = ::ModMaxiTooltips.TacticalTooltip.multi_hit_summary__monte_carlo(attacker, target, skill);
+            info_keys = ["head", "body"];
+            icons = [
+                "maxi_tt_multihit_head_hit_chance.png", "maxi_tt_multihit_body_hit_chance.png",
+                "maxi_tt_num_hits_2.png", "maxi_tt_num_hits_3.png"
+            ];
+            for (local num_hits = 1; num_hits < num_attacks; num_hits++) {
+                info_keys.push(num_hits);
+            }
+        } else {
+            info = ::ModMaxiTooltips.TacticalTooltip.attack_info_summary_from_parameters__smartfast(attacker, target, skill);
+            info_keys = ["head", "body"];
+            icons = ["maxi_tt_head_hit_chance.png", "maxi_tt_body_hit_chance.png"];
+        }
 
         calculation_time = ::MSU.Utils.Timer("maxi tt timer").silentStop();
-
-        // Restoring kill_chance since there is only a single hit
-        local hitchance = skill.getHitchance(target);
-        info.kill_chance = info.marginal_kill_chance / hitchance * 100;
 
         tooltip.extend(tooltip_from_info(info, calculation_time, info_keys, icons));
     }

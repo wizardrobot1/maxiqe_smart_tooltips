@@ -319,9 +319,6 @@ local function interval(a, b, n) {
 
     local damageDirectCoefficient = ::Math.minf(1.0, attacker_properties.DamageDirectMult * (skill.m.DirectDamageMult + attacker_properties.DamageDirectAdd + (skill.isRanged() ? attacker_properties.DamageDirectRangedAdd : attacker_properties.DamageDirectMeleeAdd)));
 
-    // // Unused in vanilla
-    // assert(attacker_properties.DamageAdditionalWithEachTile == 0, "Expected properties.DamageAdditionalWithEachTile = 0 but got instead: " + attacker_properties.DamageAdditionalWithEachTile)
-
     local hit_info = clone ::Const.Tactical.HitInfo;
     hit_info.DamageRegular = 0;
     hit_info.DamageArmor = 0;
@@ -417,7 +414,7 @@ local function interval(a, b, n) {
         damage = ::Math.min(damage, parameters.health);
     }
     if (ModMaxiTooltips.Mod.ModSettings.getSetting("clip_armor_damage").getValue()) {
-        damageArmor = ::Math.min(damage, parameters.armor);
+        damageArmor = ::Math.min(damageArmor, parameters.armor);
     }
 
     return {
@@ -437,11 +434,10 @@ local function interval(a, b, n) {
 ::ModMaxiTooltips.TacticalTooltip.armor_destroy_from_params <- function(parameters, armor_roll_number_of_points) {
     // Armor ignoring attack
     if (parameters.armor == 0 || parameters.direct_damage_coefficient >= 1.0) {
-        // Note the double-min: we don't need to care about armor value at all
         return {
             proba_armor_destroy=0.,
             destroy_point=null,
-            representation=[[1., parameters.min_damage, parameters.min_damage, 1]]
+            representation=[[1., parameters.min_damage, parameters.max_damage, 2]]
         }
     }
 
@@ -458,12 +454,12 @@ local function interval(a, b, n) {
 
     local min_damage = parameters.min_damage * parameters.armor_multiplier;
 
-    // Armor destroy is certain: use only the max damage
+    // Armor destroy is certain: use a two point representation
     if (min_damage >= parameters.armor) {
         return {
             proba_armor_destroy=1.,
             destroy_point=parameters.min_damage,
-            representation=[[1., parameters.max_damage, parameters.max_damage, 1]]
+            representation=[[1., parameters.min_damage, parameters.max_damage, 2]]
         }
     }
 
@@ -480,10 +476,12 @@ local function interval(a, b, n) {
         }
     }
 
-    // A single point in the destroy_armor range and the remainder at low damage values
+    // Two separate ranges:
+    // - Two points in the destroy_armor range
+    // - The remainder covering low damage values
     local representation = [
         [1 - proba_armor_destroy, parameters.min_damage, destroy_point - 1, armor_roll_number_of_points - 1],
-        [proba_armor_destroy, parameters.max_damage, parameters.max_damage, 1]
+        [proba_armor_destroy, destroy_point, parameters.max_damage, 2]
     ]
 
     return {
@@ -541,8 +539,7 @@ local function interval(a, b, n) {
 
             health_damage += weight_armor * weight_health * res.health_damage;
             armor_damage += weight_armor * weight_health * res.armor_damage;
-
-            proba_armor_destroy += weight_armor * weight_health * (parameters.armor <= res.armor_damage).tofloat();
+            // proba_armor_destroy += weight_armor * weight_health * (parameters.armor <= res.armor_damage).tofloat();
             kill_proba += weight_armor * weight_health * (parameters.health <= res.health_damage).tofloat();
         }
     }
