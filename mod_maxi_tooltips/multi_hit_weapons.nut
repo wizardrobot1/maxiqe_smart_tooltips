@@ -1,3 +1,7 @@
+// Monte-Carlo estimation for all skills with behavior unsuitable for exact estimation
+// - split-man
+// - multi-hit attacks
+
 if (!("TacticalTooltip" in ::ModMaxiTooltips)) {
     ::ModMaxiTooltips.TacticalTooltip <- {};
 }
@@ -27,7 +31,7 @@ if (!("TacticalTooltip" in ::ModMaxiTooltips)) {
     local start_health = parameters_body.health;
     local start_body_armor = parameters_body.armor;
     local start_head_armor = parameters_head.armor;
-    
+
     // For a main attack to body
     local parameters_secondary_hit = clone parameters_head;
     parameters_secondary_hit.health_multiplier *= 0.5;
@@ -163,7 +167,7 @@ if (!("TacticalTooltip" in ::ModMaxiTooltips)) {
         head_armor_damage=head_armor_damage.value(),
         kill_proba=kill_proba.value()
     }
-    
+
     return {
         summary_body=summary_body,
         summary_head=summary_head

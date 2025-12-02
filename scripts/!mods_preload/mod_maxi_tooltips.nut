@@ -1,7 +1,7 @@
 ::ModMaxiTooltips <- {
 	ID = "mod_maxi_tooltips",
 	Name = "ModMaxiTooltips",
-	Version = "0.1.0",
+	Version = "1.0.0",
 	QueueBucket = {
 		FirstWorldInit = []
 	}

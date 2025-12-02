@@ -2,23 +2,23 @@
 
 ## Todo
 
-- MSU: enable RawHtml in all tooltips
+- menu control
 
-- x include hit factors
-    - done, via direct copying of built-in hit-factors + reference mod
+    - monte-carlo: num-samples
+    - fast: num samples
+    - ::ModMaxiTooltips.TacticalTooltip.armor_destroy_from_params
+        - local total_number_of_points = 7;
 
-- x add first line head / body distinction in multi-hit MC
+- ::ModMaxiTooltips.TacticalTooltip.damage_from_parameters__summary__smartfast <- function(parameters) {
+    local maximum_sampling_points = 105;
+    local armor_roll_number_of_points = 7;
 
-- tests:
-    - check attack tooltip in various conditions
-    - check gash skill
+    - raise armor_roll_number_of_points if the number of points is low enough that (max - min + 1)**2 <= maximum_sampling_points
 
-- Icon tooltips to explain what is going on
 
-- hit factors: visual improvements
-    - icons?
-    - clearly separate sections
-    - clear alerts for immunities and 9lives
+- ::ModMaxiTooltips.TacticalTooltip.attack_info_tooltip_split_man
+    
+    - x single line when damage is equal
 
 - hit factors: code improvements
     - add nine lives
@@ -30,6 +30,11 @@
     - improve code for immunities
     - improve damage reduction code
 
+- hit factors: visual improvements
+    - icons?
+    - clearly separate sections
+    - clear alerts for immunities and 9lives
+
 - bugs:
     - "Perk+" tooltips not working?
         - check if it works in legends?
@@ -37,7 +42,32 @@
         - check details of code?
         - >> replaced a maxf by max?
 
-- menu control
+- tests:
+
+    - check gash sound
+
+    - unit tests to compare:
+
+        - `damage_from_parameters__summary__smartfast`
+            - using `damage_from_parameters__with_roll`
+        - `damage_direct__summary__smartfast`
+            - using `damage_direct__with_roll`
+
+        - `damage_from_parameters__summary__exact`
+            - using `damage_from_parameters__with_roll`
+        - `attack_info_summary__slow__exact`
+            - using `damage_direct__with_roll`
+
+- benchmark:
+
+    - compare `damage_from_parameters__summary__exact`
+    - to `damage_from_parameters__summary__smartfast`
+
+- MSU: enable RawHtml in all tooltips
+
+- documentation
+
+- remove timers
 
 ## Smartfast estimation
 

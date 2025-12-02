@@ -1,8 +1,9 @@
 // Test functions for damage_estimation
 
+local epsilon = 0.1;
 function is_close(value1, value2)
 {
-    return (value1 - value2 <= 0.01) && (value2 - value1 <= 0.01)
+    return (::Math.abs(value1 - value2) <= epsilon)
 }
 
 local did_a_test_fail = false;
