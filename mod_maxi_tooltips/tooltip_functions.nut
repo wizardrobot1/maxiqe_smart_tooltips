@@ -300,7 +300,7 @@ if (!("TacticalTooltip" in ::ModMaxiTooltips)) {
 				if (::ModMaxiTooltips.Mod.ModSettings.getSetting("ShowStatusPerkAndEffect").getValue() == false)
 					if (!perk.isHidden() && perk.isType(::Const.SkillType.StatusEffect)) continue;
 
-				entryText += ::ModMaxiTooltips.NestedTooltips.getNestedPerkName(perk) + ", ";
+				entryText += ::ModMaxiTooltips.NestedTooltips.getNestedSkillName(perk) + ", ";
 			}
 			if (entryText != "") entryText = entryText.slice(0, -2);
 		}

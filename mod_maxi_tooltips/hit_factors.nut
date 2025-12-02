@@ -246,7 +246,7 @@ local function nested_tooltip(text, tt_type, tt_ref = null) {
                 blockChance = ::Math.ceil(blockChance * 100);
                 ret.push({
                     icon = "ui/tooltips/negative.png",
-                    text = red("-" + malus + "%") + " " + "Line of fire blocked"
+                    text = red("-" + blockChance + "%") + " " + "Line of fire blocked"
                 });
             }
         }
