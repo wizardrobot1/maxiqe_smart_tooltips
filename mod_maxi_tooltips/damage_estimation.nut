@@ -213,7 +213,6 @@ local function interval(a, b, n) {
     local properties = skill.m.Container.buildPropertiesForUse(skill, target);
 
     local head_hit_chance = properties.getHitchance(::Const.BodyPart.Head);
-    // local res_min_body = ::ModMaxiTooltips.TacticalTooltip.damage_direct__with_roll(properties.DamageRegularMin, properties.DamageRegularMin, ::Const.BodyPart.Body, skill, attacker, target);
 
     local hit_info = clone ::Const.Tactical.HitInfo;
     local other_properties = target.m.Skills.buildPropertiesForBeingHit(attacker, skill, hit_info);
@@ -223,16 +222,16 @@ local function interval(a, b, n) {
     local health = target.m.Hitpoints;
 
     local function curried_damage_body_armor(x, y) {
-        return ::ModMaxiTooltips.TacticalTooltip.damage_direct__with_roll(x, y, ::Const.BodyPart.Body, skill, attacker, target).DamageInflictedArmor
+        return ::ModMaxiTooltips.TacticalTooltip.damage_direct__with_roll(x, y, ::Const.BodyPart.Body, skill, attacker, target).armor_damage
     }
     local function  curried_damage_body_health(x, y) {
-        return ::ModMaxiTooltips.TacticalTooltip.damage_direct__with_roll(x, y, ::Const.BodyPart.Body, skill, attacker, target).DamageInflictedHitpoints
+        return ::ModMaxiTooltips.TacticalTooltip.damage_direct__with_roll(x, y, ::Const.BodyPart.Body, skill, attacker, target).health_damage
     }
     local function  curried_damage_head_armor(x, y) {
-        return ::ModMaxiTooltips.TacticalTooltip.damage_direct__with_roll(x, y, ::Const.BodyPart.Head, skill, attacker, target).DamageInflictedArmor
+        return ::ModMaxiTooltips.TacticalTooltip.damage_direct__with_roll(x, y, ::Const.BodyPart.Head, skill, attacker, target).armor_damage
     }
     local function  curried_damage_head_health(x, y) {
-        return ::ModMaxiTooltips.TacticalTooltip.damage_direct__with_roll(x, y, ::Const.BodyPart.Head, skill, attacker, target).DamageInflictedHitpoints
+        return ::ModMaxiTooltips.TacticalTooltip.damage_direct__with_roll(x, y, ::Const.BodyPart.Head, skill, attacker, target).health_damage
     }
 
     local distribution_body_armor = ::ModMaxiTooltips.TacticalTooltip.getDistributionInfo(
@@ -281,8 +280,8 @@ local function interval(a, b, n) {
 
     local summary_head = {
         health_damage = distribution_head_health.mean,
-        body_armor_damage = distribution_head_armor.mean,
-        head_armor_damage = 0,
+        body_armor_damage = 0,
+        head_armor_damage = distribution_head_armor.mean,
         kill_proba = distribution_head_health.proba,
         hit_chance = head_hit_chance,
     };
@@ -295,7 +294,7 @@ local function interval(a, b, n) {
         hit_chance = head_hit_chance,
     };
 
-    local kill_chance = (head_hit_chance * summary_head.kill_proba + (100 - head_hit_chance) * summary_body.kill_proba);
+    local kill_chance = (head_hit_chance * summary_head.kill_proba + (100 - head_hit_chance) * summary_body.kill_proba) / 100;
 
     return {
         head = summary_head,

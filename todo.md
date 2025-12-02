@@ -2,22 +2,6 @@
 
 ## Todo
 
-- hit factors: visual improvements
-
-    - clearly separate sections
-
-- menu control
-
-    - hit factors
-
-- bugs:
-    - "Perk+" tooltips not working?
-        - check if it works in legends?
-    - Rounding error difference between the two smartfast calculations somehow
-        - check details of code?
-        - >> replaced a maxf by max?
-        - run benchmark or test?
-
 - tests:
 
     - check gash sound
@@ -41,6 +25,22 @@
     - compare `damage_from_parameters__summary__exact`
     - to `damage_from_parameters__summary__smartfast`
 
+- hit factors: visual improvements
+
+    - clearly separate sections
+
+- menu control
+
+    - hit factors
+
+- bugs:
+    - "Perk+" tooltips not working?
+        - check if it works in legends?
+    - Rounding error difference between the two smartfast calculations somehow
+        - check details of code?
+        - >> replaced a maxf by max?
+        - run benchmark or test?
+
 - MSU: enable RawHtml in all tooltips
 
 - documentation
@@ -48,8 +48,6 @@
 - remove timers? Or use them to give a warning to user?
 
 - $ re-add armor break info
-
-
 
 - hit factors: code improvements
     - ? util functions:
