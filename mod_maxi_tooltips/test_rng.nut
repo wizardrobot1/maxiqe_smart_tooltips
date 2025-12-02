@@ -209,4 +209,8 @@ function run_all_tests() {
     test_correlation(min3, max3);
 }
 
-run_all_tests();
+
+// TODO: if debug
+if (false) {
+    run_all_tests();
+}

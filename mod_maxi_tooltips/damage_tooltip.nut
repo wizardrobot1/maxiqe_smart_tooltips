@@ -210,11 +210,11 @@ local function tooltip_from_info(info, calculation_time, info_keys, icons)
         ::MSU.Utils.Timer("maxi tt timer");
 
         if (skill.getID() == "actives.split_man") {
-            info = ::ModMaxiTooltips.TacticalTooltip.split_man_summary__monte_carlo(attacker, target, skill);
+            info = ::ModMaxiTooltips.TacticalTooltip.attack_info__split_man(attacker, target, skill);
             info_keys = ["head", "body"];
             icons = ["maxi_tt_splitman_head_hit_chance.png", "maxi_tt_splitman_body_hit_chance.png"];
         } else if (num_attacks >= 2) {
-            info = ::ModMaxiTooltips.TacticalTooltip.multi_hit_summary__monte_carlo(attacker, target, skill);
+            info = ::ModMaxiTooltips.TacticalTooltip.attack_info__multihit(attacker, target, skill);
             info_keys = ["head", "body"];
             icons = [
                 "maxi_tt_multihit_head_hit_chance.png", "maxi_tt_multihit_body_hit_chance.png",
@@ -224,7 +224,7 @@ local function tooltip_from_info(info, calculation_time, info_keys, icons)
                 info_keys.push(num_hits);
             }
         } else {
-            info = ::ModMaxiTooltips.TacticalTooltip.attack_info_summary_from_parameters__smartfast(attacker, target, skill);
+            info = ::ModMaxiTooltips.TacticalTooltip.attack_info__generic(attacker, target, skill);
             info_keys = ["head", "body"];
             icons = ["maxi_tt_head_hit_chance.png", "maxi_tt_body_hit_chance.png"];
         }

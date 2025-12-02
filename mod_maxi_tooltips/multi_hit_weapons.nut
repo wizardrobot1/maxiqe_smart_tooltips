@@ -32,16 +32,16 @@ if (!("TacticalTooltip" in ::ModMaxiTooltips)) {
 
 ::ModMaxiTooltips.TacticalTooltip.MeanCalculator <- class {
     sum = 0.0;
-    count = 0;
+    count = 0.0;
 
     function constructor() {
         this.sum = 0.0;
-        this.count = 0;
+        this.count = 0.0;
     }
 
-    function update(value) {
-        this.sum += value.tofloat();
-        this.count += 1;
+    function update(value, weight = 1) {
+        this.sum += value.tofloat() * weight;
+        this.count += weight;
     }
 
     function value() {
@@ -112,7 +112,7 @@ if (!("TacticalTooltip" in ::ModMaxiTooltips)) {
 // - reduced hit to the other body part
 //
 // <!> Summaries are slightly different since the attack hits both body parts <!>
-::ModMaxiTooltips.TacticalTooltip.split_man_summary__monte_carlo <- function (attacker, target, skill) {
+::ModMaxiTooltips.TacticalTooltip.damage_info__split_man <- function (attacker, target, skill) {
     local parameters_head = ::ModMaxiTooltips.TacticalTooltip.compute_parameters_from_attack(attacker, target, skill, ::Const.BodyPart.Head);
     local parameters_body = ::ModMaxiTooltips.TacticalTooltip.compute_parameters_from_attack(attacker, target, skill, ::Const.BodyPart.Body);
 
@@ -213,16 +213,26 @@ if (!("TacticalTooltip" in ::ModMaxiTooltips)) {
 
     local kill_chance = (head_hit_chance * summary_res.head.kill_proba + (100 - head_hit_chance) * summary_res.body.kill_proba);
 
-    local raw_hit_chance = skill.getHitchance(target);
-    local marginal_kill_chance = kill_chance * raw_hit_chance / 100;
-
     return {
         body=summary_res["body"],
         head=summary_res["head"],
         kill_chance=kill_chance,
-        marginal_kill_chance=marginal_kill_chance,
+        marginal_kill_chance=0,     // Placeholder
     }
 }
+
+
+// Add skill hithchance
+// NB: it's important to separate out hitchance for testing purposes
+// Attacker and target fixtures lack information for hitchance
+::ModMaxiTooltips.TacticalTooltip.attack_info__split_man <- function (attacker, target, skill) {
+    local info = ::ModMaxiTooltips.TacticalTooltip.damage_info__split_man(attacker, target, skill);
+
+    info.marginal_kill_chance = info.kill_chance * skill.getHitchance(target) / 100;
+
+    return info
+}
+
 
 
 class FactorialCache {
@@ -274,14 +284,10 @@ local function compute_hit_distribution(hitchance, num_attacks) {
 // - update the corresponding n-hit accumulator
 //
 // For standard attacks, also increment a standard head / body paired accumulators
-::ModMaxiTooltips.TacticalTooltip.multi_hit_summary__monte_carlo <- function (attacker, target, skill) {
-    local rng = ::ModMaxiTooltips.TacticalTooltip.CustomRNG(123456);
-
-    local raw_hit_chance = skill.getHitchance(target);
+::ModMaxiTooltips.TacticalTooltip.damage_info__multihit <- function (attacker, target, skill) {
     local head_hit_chance = ::ModMaxiTooltips.TacticalTooltip.compute_head_hit_chance(attacker, target, skill);
 
     local num_attacks = ::ModMaxiTooltips.TacticalTooltip.get_number_of_attacks(skill);
-    local hit_distribution = compute_hit_distribution(raw_hit_chance, num_attacks);
 
     local parameters_head = ::ModMaxiTooltips.TacticalTooltip.compute_parameters_from_attack(attacker, target, skill, ::Const.BodyPart.Head);
     local parameters_body = ::ModMaxiTooltips.TacticalTooltip.compute_parameters_from_attack(attacker, target, skill, ::Const.BodyPart.Body);
@@ -311,92 +317,128 @@ local function compute_hit_distribution(hitchance, num_attacks) {
         kill_proba[key] <- ::ModMaxiTooltips.TacticalTooltip.MeanCalculator();
     }
 
-    local num_repeats = 2 * ::ModMaxiTooltips.Mod.ModSettings.getSetting("num_samples_monte_carlo").getValue();
+    local num_repeats = ::ModMaxiTooltips.Mod.ModSettings.getSetting("num_samples_monte_carlo").getValue();
 
-    for (local repeat = 0; repeat < num_repeats; repeat++) {
-        // Reset health and armor
-        parameters_body.health = start_health;
-        parameters_body.armor = start_body_armor;
-        parameters_head.health = start_health;
-        parameters_head.armor = start_head_armor;
 
-        for (local num_hits = 0; num_hits < num_attacks; num_hits++) {
-            local attack_key = null;
-            {
-                local attacked_parameters;
-                local body_part_roll = rng.rand(1, 100);
-                // Make first roll deterministic to split evenly between head and body attacks
-                if (num_hits == 0) {
-                    body_part_roll = ((100. * repeat / num_repeats) + 1);
+    // Where does the first attack hit
+    foreach (first_attack_body_part in ["head", "body"]) {
+        // Reset rng to ensure symmetry between these two cases
+        local rng = ::ModMaxiTooltips.TacticalTooltip.CustomRNG(123456);
+
+        // Avoid division by 0
+        local head_weight = (head_hit_chance / 100 - head_hitchance) + 0.0001;
+        local weight = first_attack_body_part == "head"? head_weight : 1 / head_weight;
+
+        for (local repeat = 0; repeat < num_repeats; repeat++) {
+            // Reset health and armor
+            parameters_body.health = start_health;
+            parameters_body.armor = start_body_armor;
+            parameters_head.health = start_health;
+            parameters_head.armor = start_head_armor;
+
+            for (local num_hits = 0; num_hits < num_attacks; num_hits++) {
+                local attack_key = null;
+                {
+                    local attacked_parameters;
+                    local body_part_roll = rng.rand(1, 100);
+                    // Make first roll deterministic to split evenly between head and body attacks
+                    if (num_hits == 0) {
+                        attack_key = first_attack_body_part;
+                    } else if (body_part_roll <= head_hit_chance) {
+                        attack_key = "head";
+                        attacked_parameters = parameters_head;
+                    } else {
+                        attack_key = "body";
+                        attacked_parameters = parameters_body;
+                    }
+
+                    local armor_roll = rng.rand(attacked_parameters.min_damage, attacked_parameters.max_damage);
+                    local health_roll = rng.rand(attacked_parameters.min_damage, attacked_parameters.max_damage);
+
+                    local res = ::ModMaxiTooltips.TacticalTooltip.damage_from_parameters__with_roll(armor_roll, health_roll, attacked_parameters);
+
+                    attacked_parameters.health -= res.health_damage;
+                    attacked_parameters.armor -= res.armor_damage;
+
+                    // Synchronize parameters
+                    // Since armor isn't shared, we don't need to sync it
+                    parameters_body.health = attacked_parameters.health;
+                    parameters_head.health = attacked_parameters.health;
                 }
-                if (body_part_roll <= head_hit_chance) {
-                    attack_key = "head";
-                    attacked_parameters = parameters_head;
-                } else {
-                    attack_key = "body";
-                    attacked_parameters = parameters_body;
+
+                health_damage[num_hits].update(start_health - parameters_body.health, weight);
+                body_armor_damage[num_hits].update(start_body_armor - parameters_body.armor, weight);
+                head_armor_damage[num_hits].update(start_head_armor - parameters_head.armor, weight);
+                kill_proba[num_hits].update(parameters_body.health <= 0, weight);
+
+                // Increment accumulator for a standard attack
+                if (num_hits == 0 && attack_key) {
+                    health_damage[attack_key].update(start_health - parameters_body.health);
+                    body_armor_damage[attack_key].update(start_body_armor - parameters_body.armor);
+                    head_armor_damage[attack_key].update(start_head_armor - parameters_head.armor);
+                    kill_proba[attack_key].update(parameters_body.health <= 0);
                 }
-
-                local armor_roll = rng.rand(attacked_parameters.min_damage, attacked_parameters.max_damage);
-                local health_roll = rng.rand(attacked_parameters.min_damage, attacked_parameters.max_damage);
-
-                local res = ::ModMaxiTooltips.TacticalTooltip.damage_from_parameters__with_roll(armor_roll, health_roll, attacked_parameters);
-
-                attacked_parameters.health -= res.health_damage;
-                attacked_parameters.armor -= res.armor_damage;
-
-                // Synchronize parameters
-                // Since armor isn't shared, we don't need to sync it
-                parameters_body.health = attacked_parameters.health;
-                parameters_head.health = attacked_parameters.health;
-            }
-
-            health_damage[num_hits].update(start_health - parameters_body.health);
-            body_armor_damage[num_hits].update(start_body_armor - parameters_body.armor);
-            head_armor_damage[num_hits].update(start_head_armor - parameters_head.armor);
-            kill_proba[num_hits].update(parameters_body.health <= 0);
-
-            // Increment accumulator for a standard attack
-            if (num_hits == 0 && attack_key) {
-                health_damage[attack_key].update(start_health - parameters_body.health);
-                body_armor_damage[attack_key].update(start_body_armor - parameters_body.armor);
-                head_armor_damage[attack_key].update(start_head_armor - parameters_head.armor);
-                kill_proba[attack_key].update(parameters_body.health <= 0);
             }
         }
     }
 
-    local res = {};
 
-    local marginal_kill_chance = 0;
+    local info = {};
 
     // Misleading name: actual number of hits is "num_hits + 1"
     for (local num_hits = 0; num_hits < num_attacks; num_hits++) {
-        local hit_chance = hit_distribution[num_hits+1] * 100;
-        res[num_hits] <- ({
+        info[num_hits] <- ({
             num_hits=num_hits+1,
             health_damage=health_damage[num_hits].value(),
             body_armor_damage=body_armor_damage[num_hits].value(),
             head_armor_damage=head_armor_damage[num_hits].value(),
             kill_proba=kill_proba[num_hits].value(),
-            hit_chance=hit_chance
+            hit_chance=0,   // Placeholder
         });
-        local marginal_kill_chance_increment = kill_proba[num_hits].value() * hit_chance;
-        marginal_kill_chance = marginal_kill_chance + marginal_kill_chance_increment;
     }
 
     foreach (key in ["body", "head"]) {
-        res[key] <- {
+        info[key] <- {
             health_damage=health_damage[key].value(),
             body_armor_damage=body_armor_damage[key].value(),
             head_armor_damage=head_armor_damage[key].value(),
             kill_proba=kill_proba[key].value(),
-            hit_chance=hit_distribution[1] * (key == "head"? head_hit_chance : 100 - head_hit_chance)
+            hit_chance=0,   // Placeholder
         }
     }
 
-    res.marginal_kill_chance <- marginal_kill_chance;
-    res.kill_chance <- null;
+    info.marginal_kill_chance <- 0;
+    info.kill_chance <- null;
 
-    return res;
+    return info;
+}
+
+
+::ModMaxiTooltips.TacticalTooltip.attack_info__multihit <- function (attacker, target, skill) {
+    local info = ::ModMaxiTooltips.TacticalTooltip.damage_info__multihit(attacker, target, skill)
+
+    local raw_hit_chance = skill.getHitchance(target);
+    local head_hit_chance = ::ModMaxiTooltips.TacticalTooltip.compute_head_hit_chance(attacker, target, skill);
+
+    local hit_distribution = compute_hit_distribution(raw_hit_chance, num_attacks);
+
+    // Compute marginal kill chance by summing over the "num_hits" information lines
+    // If we also added the head and body lines, we would double count!
+    local marginal_kill_chance = 0;
+
+    // Misleading name: actual number of hits is "num_hits + 1"
+    for (local num_hits = 0; num_hits < num_attacks; num_hits++) {
+        info[num_hits].hit_chance = hit_distribution[num_hits+1] * 100;     // Note the offset due to misleading var name
+        local marginal_kill_chance_increment = info[num_hits].kill_proba * info[num_hits].hit_chance;
+        marginal_kill_chance = marginal_kill_chance + marginal_kill_chance_increment;
+    }
+
+    foreach (key in ["body", "head"]) {
+        info[key].hit_chance = hit_distribution[1] * (key == "head"? head_hit_chance : 100 - head_hit_chance)
+    }
+
+    info.marginal_kill_chance = marginal_kill_chance;
+    info.kill_chance = null;
+
+    return info;
 }
