@@ -9,6 +9,7 @@ div.tooltipAttributeList {
 div.tooltipAttributeList img {
     width: 20px;
     height: 20px;
+    margin-right: 0.5em;
 }
 
 div.tooltipAttributeList span {

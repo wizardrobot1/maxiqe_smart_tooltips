@@ -26,3 +26,14 @@ TooltipModule.prototype.addContentTextDiv = function(_parentDIV, _data, _isChild
 	this.rf_unescapeTagsOnElement(ret.find(".text:first"));
 	return ret;
 };
+
+MaxiTooltips.Hooks.TooltipModule_addHeaderTextDiv = TooltipModule.prototype.addHeaderTextDiv;
+TooltipModule.prototype.addHeaderTextDiv = function(_parentDIV, _data)
+{
+	var ret = MaxiTooltips.Hooks.TooltipModule_addHeaderTextDiv.call(this, _parentDIV, _data);
+	if (ret === null || _data.rawHTMLInText !== true )
+		return ret;
+	this.rf_unescapeTagsOnElement(ret.find(".text:first"));
+	return ret;
+};
+

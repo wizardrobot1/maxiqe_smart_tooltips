@@ -1,14 +1,16 @@
-::ModMaxiTooltips.TacticalTooltip <- {}
+if (!("TacticalTooltip" in ::ModMaxiTooltips)) {
+    ::ModMaxiTooltips.TacticalTooltip <- {};
+}
 
 // Completely replace actor default tooltip
-::ModMaxiTooltips.TacticalTooltip.actorTooltipHook <- function(entity, _targetedWithSkill = null)
+::ModMaxiTooltips.TacticalTooltip.actorTooltipHook <- function(entity, skill = null)
 {
     if (!entity.isPlacedOnMap() || !entity.isAlive() || entity.isDying() || !entity.isDiscovered() || entity.isHiddenToPlayer())
     {
         return [];
     }
 
-    local tooltip = ::ModMaxiTooltips.TacticalTooltip.basicInformation(entity, _targetedWithSkill);
+    local tooltip = ::ModMaxiTooltips.TacticalTooltip.basicInformation(entity, skill);
 
 	// A small utility function: check if setting matches entity type
     local function verifySettingValue( _settingID )
@@ -17,11 +19,14 @@
         return value != "None" && (value == "All" || (value == "Player Only" && entity.isPlayerControlled()) || (value == "AI Only" && !entity.isPlayerControlled()))
     }
 
-    if (verifySettingValue("TacticalTooltip_Attributes")) tooltip.extend(ModMaxiTooltips.TacticalTooltip.getTooltipAttributesSmall(entity, 100));
     if (verifySettingValue("TacticalTooltip_Effects")) tooltip.extend(ModMaxiTooltips.TacticalTooltip.getTooltipEffects(entity, 200));
+
     if (verifySettingValue("TacticalTooltip_Perks")) tooltip.extend(ModMaxiTooltips.TacticalTooltip.getTooltipPerks(entity, 300));
+
     if (verifySettingValue("TacticalTooltip_ActiveSkills")) tooltip.extend(ModMaxiTooltips.TacticalTooltip.getActiveSkills(entity, 400));
+
     if (verifySettingValue("TacticalTooltip_EquippedItems")) tooltip.extend(ModMaxiTooltips.TacticalTooltip.getTooltipEquippedItems(entity, 500));
+
     if (verifySettingValue("TacticalTooltip_BagItems")) tooltip.extend(ModMaxiTooltips.TacticalTooltip.getTooltipBagItems(entity, 600));
 
     tooltip.extend(ModMaxiTooltips.TacticalTooltip.getGroundItems(entity, 700));
@@ -29,7 +34,37 @@
     return tooltip;
 };
 
-::ModMaxiTooltips.TacticalTooltip.basicInformation <- function(entity, _targetedWithSkill){
+::ModMaxiTooltips.TacticalTooltip.hitChanceTooltip <- function(entity, skill)
+{
+    local tooltip = [];
+    if (!entity.isPlayerControlled() && skill != null && this.isKindOf(skill, "skill"))
+    {
+        local tile = entity.getTile();
+
+        if (tile.IsVisibleForEntity && skill.isUsableOn(entity.getTile()))
+        {
+            local children = [];
+
+            local attacker = skill.m.Container.getActor();
+            local hit_information_tooltip = ::ModMaxiTooltips.TacticalTooltip.attack_info_tooltip(attacker, entity, skill);
+
+            children.extend(hit_information_tooltip);
+
+            children.extend(skill.getHitFactors(tile));
+
+            tooltip.push({
+                id = 10,
+                type = "headerText",
+                icon = "ui/icons/hitchance.png",
+                text = "[color=" + ::Const.UI.Color.PositiveValue + "]" + skill.getHitchance(entity) + "%[/color] chance to hit",
+                children = children,
+            });
+        }
+    }
+    return tooltip
+}
+
+::ModMaxiTooltips.TacticalTooltip.basicInformation <- function(entity, skill){
     local turnsToGo = ::Tactical.TurnSequenceBar.getTurnsUntilActive(entity.getID());
     local tooltip = [
         {
@@ -39,6 +74,8 @@
             icon = "ui/tooltips/height_" + entity.getTile().Level + ".png"
         }
     ];
+
+    tooltip.extend(::ModMaxiTooltips.TacticalTooltip.hitChanceTooltip(entity, skill));
 
     local acting_text = ::Tactical.TurnSequenceBar.getActiveEntity() == entity ? "Acting right now!" : entity.m.IsTurnDone || turnsToGo == null ? "Turn done" : "Acts in " + turnsToGo + (turnsToGo > 1 ? " turns" : " turn");
     if (entity.m.IsActingEachTurn && !entity.m.IsTurnDone && entity.isWaitActionSpent()){
@@ -53,39 +90,6 @@
             text = acting_text
         }
     ])
-
-    if (!entity.isPlayerControlled() && _targetedWithSkill != null && this.isKindOf(_targetedWithSkill, "skill"))
-    {
-        local tile = entity.getTile();
-
-        if (tile.IsVisibleForEntity && _targetedWithSkill.isUsableOn(entity.getTile()))
-        {
-            tooltip.push({
-                id = 10,
-                type = "text",
-                icon = "ui/icons/hitchance.png",
-                text = "[color=" + ::Const.UI.Color.PositiveValue + "]" + _targetedWithSkill.getHitchance(entity) + "%[/color] chance to hit",
-                children = _targetedWithSkill.getHitFactors(tile)
-            });
-
-            tooltip.push(
-                {
-                    id = 20,
-                    type = "text",
-                    text = "Total expected damage : " + _targetedWithSkill.getExpectedDamage(entity).TotalDamage,
-                }
-            );
-            // // Modify skill.getTooltip to build skill.getDamageRange
-            // // from getExpectedDamage
-            // local ret = {
-            //     ArmorDamage = armorDamage,
-            //     DirectDamage = directDamage,
-            //     HitpointDamage = hitpointDamage,
-            //     TotalDamage = hitpointDamage + armorDamage + directDamage
-            // };
-        }
-    }
-
 
     tooltip.extend(ModMaxiTooltips.TacticalTooltip.getTooltipAttributesSmall(entity, 40));
 
