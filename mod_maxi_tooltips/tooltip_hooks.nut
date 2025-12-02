@@ -2,9 +2,7 @@
 
 	q.getTooltip = @(__original) function( _targetedWithSkill = null )
 	{
-		local tooltip = __original(_targetedWithSkill);
-
-        return ::ModMaxiTooltips.TacticalTooltip.actorTooltipHook(tooltip, this);
+        return ::ModMaxiTooltips.TacticalTooltip.actorTooltipHook(this, _targetedWithSkill);
 	}
 
 });
@@ -13,9 +11,7 @@
 
 	q.getTooltip = @(__original) function( _targetedWithSkill = null )
 	{
-		local tooltip = __original(_targetedWithSkill);
-
-        return ::ModMaxiTooltips.TacticalTooltip.actorTooltipHook(tooltip, this);
+        return ::ModMaxiTooltips.TacticalTooltip.actorTooltipHook(this, _targetedWithSkill);
 	}
 
 });

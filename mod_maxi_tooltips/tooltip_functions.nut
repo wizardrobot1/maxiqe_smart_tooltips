@@ -1,22 +1,14 @@
 ::ModMaxiTooltips.TacticalTooltip <- {}
 
-// Replace actor default tooltip with this function instead
-::ModMaxiTooltips.TacticalTooltip.actorTooltipHook <- function(tooltip, entity)
+// Completely replace actor default tooltip
+::ModMaxiTooltips.TacticalTooltip.actorTooltipHook <- function(entity, _targetedWithSkill = null)
 {
-    if (!entity.isPlacedOnMap() || !entity.isAlive() || entity.isDying()) return tooltip;
-    if (entity.isDiscovered() == false) return tooltip;
-    if (entity.isHiddenToPlayer()) return tooltip;
+    if (!entity.isPlacedOnMap() || !entity.isAlive() || entity.isDying() || !entity.isDiscovered() || entity.isHiddenToPlayer())
+    {
+        return [];
+    }
 
-	// Remove all vanilla generated effect entries but possible also most mod-generated entries
-	for (local index = (tooltip.len() - 1); index >= 0; index--)	// we move through it backwards to safely remove entries during it
-	{
-		local entry = tooltip[index];
-		if (entry.id >= 100) tooltip.remove(index);
-	}
-
-	::ModMaxiTooltips.TacticalTooltip.changeActingTooltip(tooltip, entity);
-
-	::ModMaxiTooltips.TacticalTooltip.changeProgressBars(tooltip, entity);
+    local tooltip = ::ModMaxiTooltips.TacticalTooltip.basicInformation(entity, _targetedWithSkill);
 
 	// A small utility function: check if setting matches entity type
     local function verifySettingValue( _settingID )
@@ -37,52 +29,126 @@
     return tooltip;
 };
 
-::ModMaxiTooltips.TacticalTooltip.changeActingTooltip <- function(tooltip, entity)
-{
-	// Update the acting tooltip: make text clearer and show waiting concept
-
-	// Find entry with id == 4
-	foreach (entry in tooltip)
-    {
-        if (entry.id == 4)
+::ModMaxiTooltips.TacticalTooltip.basicInformation <- function(entity, _targetedWithSkill){
+    local turnsToGo = ::Tactical.TurnSequenceBar.getTurnsUntilActive(entity.getID());
+    local tooltip = [
         {
-            local text = entry.text;
-            // The first word in vanilla is "Acts" or "Acting" and we want to add the word "again" after that to show that
-            // entity actor has used Wait. So we replace the first instance of space with "again" hyperlinked to Wait concept.
-            if (entity.m.IsActingEachTurn && !entity.m.IsTurnDone && entity.isWaitActionSpent())
-                text = ModMaxiTooltips.Mod.Tooltips.parseString(::MSU.String.replace(entry.text, " ", " [again|Concept.Wait] "));
+            id = 1,
+            type = "title",
+            text = entity.getName(),
+            icon = "ui/tooltips/height_" + entity.getTile().Level + ".png"
+        }
+    ];
 
-            entry.text = "<div class = rf_tacticalTooltipWaitContainer>" + "[img]gfx/ui/icons/initiative.png[/img]" + text + "</div>";
-            entry.rawHTMLInText <- true;
-            delete entry.icon
-            break;
+    local acting_text = ::Tactical.TurnSequenceBar.getActiveEntity() == entity ? "Acting right now!" : entity.m.IsTurnDone || turnsToGo == null ? "Turn done" : "Acts in " + turnsToGo + (turnsToGo > 1 ? " turns" : " turn");
+    if (entity.m.IsActingEachTurn && !entity.m.IsTurnDone && entity.isWaitActionSpent()){
+        acting_text = ModMaxiTooltips.Mod.Tooltips.parseString("Acts [again|Concept.Wait] in " + turnsToGo + (turnsToGo > 1 ? " turns" : " turn"));
+    }
+
+    tooltip.extend([
+        {
+            id = 2,
+            type = "text",
+            icon = "ui/icons/initiative.png",
+            text = acting_text
+        }
+    ])
+
+    if (!entity.isPlayerControlled() && _targetedWithSkill != null && this.isKindOf(_targetedWithSkill, "skill"))
+    {
+        local tile = entity.getTile();
+
+        if (tile.IsVisibleForEntity && _targetedWithSkill.isUsableOn(entity.getTile()))
+        {
+            tooltip.push({
+                id = 10,
+                type = "text",
+                icon = "ui/icons/hitchance.png",
+                text = "[color=" + ::Const.UI.Color.PositiveValue + "]" + _targetedWithSkill.getHitchance(entity) + "%[/color] chance to hit",
+                children = _targetedWithSkill.getHitFactors(tile)
+            });
+
+            tooltip.push(
+                {
+                    id = 20,
+                    type = "text",
+                    text = "Total expected damage : " + _targetedWithSkill.getExpectedDamage(entity).TotalDamage,
+                }
+            );
+            // // Modify skill.getTooltip to build skill.getDamageRange
+            // // from getExpectedDamage
+            // local ret = {
+            //     ArmorDamage = armorDamage,
+            //     DirectDamage = directDamage,
+            //     HitpointDamage = hitpointDamage,
+            //     TotalDamage = hitpointDamage + armorDamage + directDamage
+            // };
         }
     }
-};
 
 
-::ModMaxiTooltips.TacticalTooltip.changeProgressBars <- function(tooltip, entity)
-{
-	// Adjust existing progressbars displayed by Vanilla
-	for (local index = (tooltip.len() - 1); index >= 0; index--)	// we move through it backwards to safely remove entries during it
-	{
-		local entry = tooltip[index];
-		// Display the actual values for Armor (5, 6), Health (7) and Fatigue (9)
-		if (entry.id == 5 || entry.id == 6 || entry.id == 7 || entry.id == 9)
-		{
-			entry.text = " " + entry.value + " / " + entry.valueMax;
-		}
+    tooltip.extend(ModMaxiTooltips.TacticalTooltip.getTooltipAttributesSmall(entity, 40));
 
-		if (entry.id == 8)	// Replace Morale-Bar with Action-Point-Bar
-		{
-			entry.icon = "ui/icons/action_points.png",
-			entry.value = entity.getActionPoints(),
-			entry.valueMax = entity.getActionPointsMax(),
-			entry.text = "" + entity.getActionPoints() + " / " + entity.getActionPointsMax() + "",
-			entry.style = "action-points-slim";
-		}
-	}
-};
+    // Add all progressbars
+    tooltip.extend([
+        {
+            id = 50,
+            type = "progressbar",
+            icon = "ui/icons/armor_head.png",
+            value = entity.getArmor(::Const.BodyPart.Head),
+            valueMax = entity.getArmorMax(::Const.BodyPart.Head),
+            text = "" + entity.getArmor(::Const.BodyPart.Head) + " / " + entity.getArmorMax(::Const.BodyPart.Head) + "",
+            style = "armor-head-slim"
+        },
+        {
+            id = 51,
+            type = "progressbar",
+            icon = "ui/icons/armor_body.png",
+            value = entity.getArmor(::Const.BodyPart.Body),
+            valueMax = entity.getArmorMax(::Const.BodyPart.Body),
+            text = "" + entity.getArmor(::Const.BodyPart.Body) + " / " + entity.getArmorMax(::Const.BodyPart.Body) + "",
+            style = "armor-body-slim"
+        },
+        {
+            id = 52,
+            type = "progressbar",
+            icon = "ui/icons/health.png",
+            value = entity.getHitpoints(),
+            valueMax = entity.getHitpointsMax(),
+            text = "" + entity.getHitpoints() + " / " + entity.getHitpointsMax() + "",
+            style = "hitpoints-slim"
+        },
+        {
+            id = 53,
+            type = "progressbar",
+            icon = "ui/icons/morale.png",
+            value = entity.getMoraleState(),
+            valueMax = ::Const.MoraleState.COUNT - 1,
+            text = ::Const.MoraleStateName[entity.getMoraleState()],
+            style = "morale-slim"
+        },
+        {
+            id = 54,
+            type = "progressbar",
+            icon = "ui/icons/fatigue.png",
+            value = entity.getFatigue(),
+            valueMax = entity.getFatigueMax(),
+            text = "" + entity.getFatigue() + " / " + entity.getFatigueMax() + "",
+            style = "fatigue-slim"
+        },
+        {
+            id = 55,
+            type = "progressbar",
+            icon = "ui/icons/action_points.png",
+            value = entity.getActionPoints(),
+            valueMax = entity.getActionPointsMax(),
+            text = "" + entity.getActionPoints() + " / " + entity.getActionPointsMax() + "",
+            style = "action-points-slim"
+        }
+    ]);
+
+    return tooltip
+}
 
 
 // Returns a list of all attributes in tooltip-form which are not displayed as progressbars on the tooltips
