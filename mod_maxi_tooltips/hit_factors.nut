@@ -213,9 +213,9 @@ local function nested_tooltip(text, tt_type, tt_ref = null) {
     }
 
     // Alert riposte
-    local riposte = targetEntity.getSkills().hasSkill("effects.riposte");
-    if (tile.IsOccupiedByActor && myTile.getDistanceTo(tile) <= 1 && riposte)
+    if (targetEntity && myTile.getDistanceTo(tile) <= 1 && targetEntity.getSkills().hasSkill("effects.riposte") && !skill.isIgnoringRiposte())
     {
+        local riposte = targetEntity.getSkills().hasSkill("effects.riposte");
         ret.push({
             icon = "ui/tooltips/negative.png",
             text = nested_tooltip("Riposte", "Skill", riposte.ClassName)
@@ -225,7 +225,7 @@ local function nested_tooltip(text, tt_type, tt_ref = null) {
     // Ranged attacks: distance modifier to hitchance; blocked line-of-sight malus
     if (skill.m.IsRanged)
     {
-        if (tile.IsOccupiedByActor)
+        if (targetEntity)
         {
             local propertiesWithSkill = skill.m.Container.buildPropertiesForUse(skill, targetEntity);
             local malus = (distanceToTarget - skill.m.MinRange) * propertiesWithSkill.HitChanceAdditionalWithEachTile * propertiesWithSkill.HitChanceWithEachTileMult;
@@ -296,7 +296,10 @@ local function nested_tooltip(text, tt_type, tt_ref = null) {
 
 			if (damage_reduction_skill)
 			{
-                local damage_reduction_skill_tt = nested_tooltip(damage_reduction_skill.getName(), "Skill", damage_reduction_skill.ClassName);
+                local damage_reduction_skill_tt = "";
+                if ("getTooltip" in damage_reduction_skill) {
+                    damage_reduction_skill_tt = nested_tooltip(damage_reduction_skill.getName(), "Skill", damage_reduction_skill.ClassName) + " ";
+                }
 				local propertiesBefore = targetEntity.getCurrentProperties();
                 local hitInfo = clone ::Const.Tactical.HitInfo;
                 local propertiesAfter = propertiesBefore.getClone();
@@ -311,7 +314,7 @@ local function nested_tooltip(text, tt_type, tt_ref = null) {
                     if (diff > 0) {
                         ret.push({
                             icon = "ui/tooltips/positive.png",
-                            text = damage_reduction_skill_tt + " " + green(diff + "%") + " " + description
+                            text = damage_reduction_skill_tt + green(diff + "%") + " " + description
                         });
                     }
 

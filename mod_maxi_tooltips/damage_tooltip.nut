@@ -159,19 +159,19 @@ local function attack_info_tooltip_line_5(kill_proba, health_value, head_armor, 
         if (show_single_line) {
             tooltip.push({
                 type = "text",
-                text = attack_info_tooltip_line_5(info.distribution_body_health.proba, info.distribution_body_health.mean, 0, info.distribution_body_armor.mean, 100, "hitchance.png"),
+                text = attack_info_tooltip_line_5(info.distribution_body_health.proba, info.distribution_body_health.mean, 0, info.distribution_body_armor.mean, 100, "maxi_tt_body_hit_chance.png"),
                 rawHTMLInText = true
             })
         } else {
             tooltip.push({
                 type = "text",
-                text =  attack_info_tooltip_line_5(info.distribution_head_health.proba, info.distribution_head_health.mean, info.distribution_head_armor.mean, 0, info.head_hit_chance, "chance_to_hit_head.png"),
+                text =  attack_info_tooltip_line_5(info.distribution_head_health.proba, info.distribution_head_health.mean, info.distribution_head_armor.mean, 0, info.head_hit_chance, "maxi_tt_head_hit_chance.png"),
                 rawHTMLInText = true
             })
 
             tooltip.push({
                 type = "text",
-                text = attack_info_tooltip_line_5(info.distribution_body_health.proba, info.distribution_body_health.mean, 0, info.distribution_body_armor.mean, 100 - info.head_hit_chance, "hitchance.png"),
+                text = attack_info_tooltip_line_5(info.distribution_body_health.proba, info.distribution_body_health.mean, 0, info.distribution_body_armor.mean, 100 - info.head_hit_chance, "maxi_tt_body_hit_chance.png"),
                 rawHTMLInText = true
             })
         }
@@ -210,19 +210,19 @@ local function attack_info_tooltip_line_5(kill_proba, health_value, head_armor, 
         if (show_single_line) {
             tooltip.push({
                 type = "text",
-                text = attack_info_tooltip_line_5(info.distribution_body_health.proba, info.distribution_body_health.mean, 0, info.distribution_body_armor.mean, 100, "hitchance.png"),
+                text = attack_info_tooltip_line_5(info.distribution_body_health.proba, info.distribution_body_health.mean, 0, info.distribution_body_armor.mean, 100, "maxi_tt_body_hit_chance.png"),
                 rawHTMLInText = true
             })
         } else {
             tooltip.push({
                 type = "text",
-                text =  attack_info_tooltip_line_5(info.distribution_head_health.proba, info.distribution_head_health.mean, info.distribution_head_armor.mean, 0, info.head_hit_chance, "chance_to_hit_head.png"),
+                text =  attack_info_tooltip_line_5(info.distribution_head_health.proba, info.distribution_head_health.mean, info.distribution_head_armor.mean, 0, info.head_hit_chance, "maxi_tt_head_hit_chance.png"),
                 rawHTMLInText = true
             })
 
             tooltip.push({
                 type = "text",
-                text = attack_info_tooltip_line_5(info.distribution_body_health.proba, info.distribution_body_health.mean, 0, info.distribution_body_armor.mean, 100 - info.head_hit_chance, "hitchance.png"),
+                text = attack_info_tooltip_line_5(info.distribution_body_health.proba, info.distribution_body_health.mean, 0, info.distribution_body_armor.mean, 100 - info.head_hit_chance, "maxi_tt_body_hit_chance.png"),
                 rawHTMLInText = true
             })
         }
@@ -334,15 +334,9 @@ local function compute_hit_distribution(hitchance, num_attacks) {
             })
         }
 
-        // tooltip.push({
-        //         type = "text",
-        //         text = attack_info_tooltip_line_5(0, 0, 0, 0, 100 * hit_distribution[0], "maxi_tt_num_hits_0.png"),
-        //         rawHTMLInText = true
-        //     })
-
-        foreach (key in ["head", "head"]) {
-            local icon_name = "hitchance.png";
-            local hit_chance = hit_distribution[num_hits+1] * head_hit_chance;
+        foreach (key in ["head", "body"]) {
+            local icon_name = key == "head"? "maxi_tt_multihit_head_hit_chance.png" : "maxi_tt_multihit_body_hit_chance.png";
+            local hit_chance = hit_distribution[1] * (key == "head"? head_hit_chance : 100 - head_hit_chance);
             tooltip.push({
                 type = "text",
                 text = attack_info_tooltip_line_5(
@@ -357,7 +351,7 @@ local function compute_hit_distribution(hitchance, num_attacks) {
             })
         }
 
-        for (local num_hits = 0; num_hits < num_attacks; num_hits++) {
+        for (local num_hits = 1; num_hits < num_attacks; num_hits++) {
             local icon_name = format("maxi_tt_num_hits_%x.png", num_hits + 1)
             local total_armor_damage = summary_info_mc[num_hits].body_armor_damage + summary_info_mc[num_hits].head_armor_damage;
             tooltip.push({
@@ -431,7 +425,7 @@ local function compute_hit_distribution(hitchance, num_attacks) {
                     summary_info_mc.summary_head.head_armor_damage,
                     summary_info_mc.summary_head.body_armor_damage,
                     head_hit_chance,
-                    "chance_to_hit_head.png"
+                    "maxi_tt_head_hit_chance.png"
                 ),
                 rawHTMLInText = true
             })
@@ -445,7 +439,7 @@ local function compute_hit_distribution(hitchance, num_attacks) {
                     summary_info_mc.summary_body.head_armor_damage,
                     summary_info_mc.summary_body.body_armor_damage,
                     100 - head_hit_chance,
-                    "hitchance.png"
+                    "maxi_tt_body_hit_chance.png"
                 ),
                 rawHTMLInText = true
             })

@@ -7,12 +7,13 @@
 - x include hit factors
     - done, via direct copying of built-in hit-factors + reference mod
 
-- add first line head / body distinction in multi-hit MC
+- x add first line head / body distinction in multi-hit MC
 
 - tests:
     - check attack tooltip in various conditions
     - check gash skill
-    - 
+
+- Icon tooltips to explain what is going on
 
 - hit factors: visual improvements
     - icons?
@@ -22,7 +23,9 @@
 - hit factors: code improvements
     - add nine lives
     - separate function for each section
-    - util functions
+    - util functions:
+        - show value: function(val: number) -> color, display +%
+        - tooltip line: icon name, content
     - separate function for each line
     - improve code for immunities
     - improve damage reduction code
@@ -32,6 +35,7 @@
         - check if it works in legends?
     - Rounding error difference between the two smartfast calculations somehow
         - check details of code?
+        - >> replaced a maxf by max?
 
 - menu control
 

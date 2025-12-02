@@ -177,16 +177,16 @@ if (!("TacticalTooltip" in ::ModMaxiTooltips)) {
     local start_body_armor = parameters_body.armor;
     local start_head_armor = parameters_head.armor;
 
-    local health_damage = [];
-    local body_armor_damage = [];
-    local head_armor_damage = [];
-    local kill_proba = [];
+    local health_damage = {};
+    local body_armor_damage = {};
+    local head_armor_damage = {};
+    local kill_proba = {};
 
     for (local num_hits = 0; num_hits < num_attacks; num_hits++) {
-        health_damage.push(::ModMaxiTooltips.TacticalTooltip.MeanCalculator());
-        body_armor_damage.push(::ModMaxiTooltips.TacticalTooltip.MeanCalculator());
-        head_armor_damage.push(::ModMaxiTooltips.TacticalTooltip.MeanCalculator());
-        kill_proba.push(::ModMaxiTooltips.TacticalTooltip.MeanCalculator());
+        health_damage[num_hits] <- ::ModMaxiTooltips.TacticalTooltip.MeanCalculator();
+        body_armor_damage[num_hits] <- ::ModMaxiTooltips.TacticalTooltip.MeanCalculator();
+        head_armor_damage[num_hits] <- ::ModMaxiTooltips.TacticalTooltip.MeanCalculator();
+        kill_proba[num_hits] <- ::ModMaxiTooltips.TacticalTooltip.MeanCalculator();
     }
 
     foreach (key in ["body", "head"]) {
@@ -206,15 +206,15 @@ if (!("TacticalTooltip" in ::ModMaxiTooltips)) {
         parameters_head.armor = start_head_armor;
 
         for (local num_hits = 0; num_hits < num_attacks; num_hits++) {
+            local attack_key = null;
             {
                 local attacked_parameters;
-                local attack_key = null;
-                local first_roll = ::Math.rand(1, 100);
+                local body_part_roll = ::Math.rand(1, 100);
                 // Make first roll deterministic to split evenly between head and body attacks
-                if (repeat == 0) {
-                    first_roll = (100. * num_hits / num_attacks + 1);
+                if (num_hits == 0) {
+                    body_part_roll = ((100. * repeat / num_repeats) + 1);
                 }
-                if (first_roll <= head_hit_chance) {
+                if (body_part_roll <= head_hit_chance) {
                     attack_key = "head";
                     attacked_parameters = parameters_head;
                 } else {
@@ -239,7 +239,7 @@ if (!("TacticalTooltip" in ::ModMaxiTooltips)) {
             head_armor_damage[num_hits].update(start_head_armor - parameters_head.armor);
             kill_proba[num_hits].update(parameters_body.health <= 0);
 
-            if (attack_key) {
+            if (num_hits == 0 && attack_key) {
                 health_damage[attack_key].update(start_health - parameters_body.health);
                 body_armor_damage[attack_key].update(start_body_armor - parameters_body.armor);
                 head_armor_damage[attack_key].update(start_head_armor - parameters_head.armor);
@@ -248,10 +248,10 @@ if (!("TacticalTooltip" in ::ModMaxiTooltips)) {
         }
     }
 
-    local res = [];
+    local res = {};
 
     for (local num_hits = 0; num_hits < num_attacks; num_hits++) {
-        res.push({
+        res[num_hits] <- ({
             num_hits=num_hits+1,
             health_damage=health_damage[num_hits].value(),
             body_armor_damage=body_armor_damage[num_hits].value(),

@@ -115,6 +115,7 @@ local function interval(a, b, n) {
     damageRegular = ::Math.max(0, damageRegular + distance_to_target * properties.DamageAdditionalWithEachTile);
     damageArmor = ::Math.max(0, damageArmor + distance_to_target * properties.DamageAdditionalWithEachTile);
     local damageDirect = ::Math.minf(1.0, properties.DamageDirectMult * (skill.m.DirectDamageMult + properties.DamageDirectAdd + (skill.isRanged() ? properties.DamageDirectRangedAdd : properties.DamageDirectMeleeAdd)));
+    
     local injuries;
 
     if (skill.m.InjuriesOnBody != null && body_part_hit == ::Const.BodyPart.Body)
@@ -380,7 +381,7 @@ local default_parameters = {
         health_damage_armor_break = 0
         if (armor <= 0)
         {
-            health_damage_armor_break = ::Math.max(0, damageRegular * ::Math.maxf(0.0, 1.0 - parameters.direct_damage_coefficient * parameters.direct_damage_coefficient_multiplier) - armorDamage);
+            health_damage_armor_break = ::Math.maxf(0, damageRegular * ::Math.maxf(0.0, 1.0 - parameters.direct_damage_coefficient * parameters.direct_damage_coefficient_multiplier) - armorDamage);
         }
     }
 
