@@ -9,3 +9,4 @@ gfx/mods/brushes/
 .editorconfig
 .utils/
 .bbbuilder/
+gfx/ui/.DS_Store
