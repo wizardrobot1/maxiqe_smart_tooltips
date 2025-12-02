@@ -1,29 +1,84 @@
 # Plan
 
+## Test
+
+test with and without saturation
+for a mild value of point budget
+
+CHECK PARAMETERS AHEAD OF TIME
+MODIFY THEM PROGRAMMATICALLY MAYBE?
+
+entities
+
+For racial
+scripts/entity/tactical/skeleton.nut
+scripts/entity/tactical/enemies/alp.nut
+scripts/entity/tactical/enemies/schrat.nut
+scripts/entity/tactical/enemies/sand_golem.nut
+scripts/entity/tactical/enemies/sand_golem_high.nut
+
+racial + BF
+scripts/entity/tactical/enemies/skeleton_heavy.nut
+
+BF
+scripts/entity/tactical/humans/hedge_knight.nut
+
+nimble
+scripts/entity/tactical/humans/assassin.nut
+
+nimble + steel brow
+scripts/entity/tactical/humans/noble_sergeant.nut
+
+attacker:
+barbarian_thrall
+
+setup:
+- add shield scripts/items/shields/kite_shield.nut to 1H attacks
+- add duelist for 1H
+- add trait for additional damage
+
+weapons
+scripts/items/weapons/arming_sword.nut
+scripts/items/weapons/crossbow.nut
+scripts/items/weapons/battle_whip.nut
+scripts/items/weapons/fencing_sword.nut
+scripts/items/weapons/greatsword.nut
+scripts/items/weapons/javelin.nut
+scripts/items/weapons/longaxe.nut
+scripts/items/weapons/masterwork_bow.nut
+scripts/items/weapons/rondel_dagger.nut
+scripts/items/weapons/two_handed_flail.nut
+scripts/items/weapons/two_handed_flanged_mace.nut
+scripts/items/weapons/two_handed_hammer.nut
+scripts/items/weapons/winged_mace.nut
+scripts/items/weapons/woodcutters_axe.nut
+
+Find associated skills
+
+armor
+scripts/items/armor/cultist_leather_robe.nut
+scripts/items/armor/leather_lamellar.nut
+scripts/items/armor/coat_of_plates.nut
+scripts/items/armor/apron.nut
+
+scripts/items/helmets/cultist_leather_hood.nut
+scripts/items/helmets/full_helm.nut
+scripts/items/helmets/headscarf.nut
+scripts/items/helmets/flat_top_helmet.nut
+
+compare
+
+super slow
+- compute_parameters_from_attack
+- attack_info_summary__slow__exact
+
+with various rolls
+- damage_from_parameters__with_roll
+- damage_direct__with_roll
+
 ## Todo
 
-- tests:
-
-    - check gash sound
-
-    - unit tests to compare:
-
-        - `damage_from_parameters__summary__smartfast`
-            - using `damage_from_parameters__with_roll`
-        - `damage_direct__summary__smartfast`
-            - using `damage_direct__with_roll`
-
-        - `damage_from_parameters__summary__exact`
-            - using `damage_from_parameters__with_roll`
-        - `attack_info_summary__slow__exact`
-            - using `damage_direct__with_roll`
-
-        - old and new implementation of split-man
-
-- benchmark:
-
-    - compare `damage_from_parameters__summary__exact`
-    - to `damage_from_parameters__summary__smartfast`
+- documentation
 
 - hit factors: visual improvements
 
@@ -41,11 +96,9 @@
         - >> replaced a maxf by max?
         - run benchmark or test?
 
-- MSU: enable RawHtml in all tooltips
-
-- documentation
-
 - remove timers? Or use them to give a warning to user?
+
+- MSU: enable RawHtml in all tooltips
 
 - $ re-add armor break info
 

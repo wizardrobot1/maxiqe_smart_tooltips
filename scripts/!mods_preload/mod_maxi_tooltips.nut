@@ -39,13 +39,8 @@ local queueLoadOrder = [">mod_msu", ">mod_modern_hooks", ">mod_nested_tooltips"]
 	}
 });
 
-::ModMaxiTooltips.ModHook.queue(queueLoadOrder, function() {
 
-	foreach (func in ::ModMaxiTooltips.QueueBucket.FirstWorldInit)
-	{
-		func();
-	}
-	delete ::ModMaxiTooltips.QueueBucket;
+::ModMaxiTooltips.ModHook.queue(queueLoadOrder, function() {
 
 	{
 		local armor = ::new("scripts/items/armor/coat_of_plates.nut");
@@ -75,7 +70,20 @@ local queueLoadOrder = [">mod_msu", ">mod_modern_hooks", ">mod_nested_tooltips"]
 		local success = is_close(summary_head, info_exact.head) && is_close(summary_body, info_exact.body)
 
 		::World.getTemporaryRoster().remove(thrall);
+
+		TEST_SUCCESSFULL()
+
+		TEST_FAILED()
 	}
 
+}, ::Hooks.QueueBucket.FirstWorldInit);
 
+
+::ModMaxiTooltips.ModHook.queue(queueLoadOrder, function() {
+
+	foreach (func in ::ModMaxiTooltips.QueueBucket.FirstWorldInit)
+	{
+		func();
+	}
+	delete ::ModMaxiTooltips.QueueBucket;
 }, ::Hooks.QueueBucket.FirstWorldInit);
