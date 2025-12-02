@@ -223,6 +223,13 @@ local function damageFromRolls(armor_roll, health_roll, body_part_hit, skill, at
     return hit_info
 }
 
+::ModMaxiTooltips.TacticalTooltip.compute_head_hit_chance <- function(attacker, target, skill){
+    local properties = skill.m.Container.buildPropertiesForUse(skill, target);
+
+    local head_hit_chance = properties.getHitchance(::Const.BodyPart.Head);
+    return head_hit_chance;
+}
+
 // Compute the damage of attacker attacking target with skill
 ::ModMaxiTooltips.TacticalTooltip.attack_info_summary <- function(attacker, target, skill)
 {
@@ -445,6 +452,15 @@ function deepEquals(_a, _b)
 
 
 ::ModMaxiTooltips.TacticalTooltip.attack_info_tooltip <- function(attacker, target, skill){
+    if (skill.getID() == "actives.split_man") {
+        return ::ModMaxiTooltips.TacticalTooltip.attack_info_tooltip_split_man(attacker, target, skill);
+    }
+    
+    local num_attacks = ::ModMaxiTooltips.TacticalTooltip.get_number_of_attacks(skill);
+    if (num_attacks >= 2) {
+        return ::ModMaxiTooltips.TacticalTooltip.attack_info_tooltip_multi_hit(attacker, target, skill);
+    }
+    
     local hitchance = skill.getHitchance(target);
 
     local tooltip = [];
@@ -481,12 +497,6 @@ function deepEquals(_a, _b)
             && info.target.body_armor == 0
             && tablesAreEqual(info.distribution_head_health, info.distribution_body_health)
         );
-
-        tooltip.push({
-                type = "text",
-                text = attack_info_tooltip_line(info.distribution_body_health.proba, info.distribution_body_health.mean, info.distribution_body_armor.mean, 100 - info.head_hit_chance, "hitchance.png"),
-                rawHTMLInText = true
-        })
 
         if (info.kill_proba >= 1)
         {
@@ -717,6 +727,203 @@ function deepEquals(_a, _b)
         }
     }
 
+
+    return tooltip
+}
+
+
+::ModMaxiTooltips.TacticalTooltip.get_number_of_attacks <- function (skill) {
+    local three_hit_skills = [
+        "actives.cascade",
+        "actives.hail"
+    ];
+    if (three_hit_skills.find(skill.getID()) != null) {
+        return 3
+    }
+
+    local two_hit_skills = [];
+    if (two_hit_skills.find(skill.getID()) != null) {
+        return 2
+    }
+
+    return 1
+}
+
+
+local function compute_hit_distribution(hitchance, num_attacks) {
+    local factorial = [1, 1, 2, 6, 24, 120, 720];
+
+    if (num_attacks >= factorial.len()) {
+        return [0., 0.]
+    }
+
+    local res = [];
+    for (local num_hits = 0; num_hits <= num_attacks; num_hits++) {
+        local proba_atomic = ::Math.pow(1. * hitchance / 100, num_hits) * ::Math.pow(1 - 1. * hitchance / 100, num_attacks - num_hits);
+        local combinatorial_count = factorial[num_attacks] / factorial[num_hits] / factorial[num_attacks - num_hits];
+        res.push(::Math.round(100 * proba_atomic * combinatorial_count));
+    }
+
+    return res
+}
+
+
+::ModMaxiTooltips.TacticalTooltip.attack_info_tooltip_multi_hit <- function(attacker, target, skill){
+    local hitchance = skill.getHitchance(target);
+    local head_hit_chance = ::ModMaxiTooltips.TacticalTooltip.compute_head_hit_chance(attacker, target, skill);
+
+    local num_attacks = ::ModMaxiTooltips.TacticalTooltip.get_number_of_attacks(skill);
+    local hit_distribution = compute_hit_distribution(hitchance, num_attacks);
+
+    local tooltip = [];
+
+    local info = ::ModMaxiTooltips.TacticalTooltip.attack_info_summary_from_parameters__smartfast(attacker, target, skill);
+
+    local parameters_head = ::ModMaxiTooltips.TacticalTooltip.compute_parameters_from_attack(attacker, target, skill, ::Const.BodyPart.Head);
+    local parameters_body = ::ModMaxiTooltips.TacticalTooltip.compute_parameters_from_attack(attacker, target, skill, ::Const.BodyPart.Body);
+    local summary_info_mc = ::ModMaxiTooltips.TacticalTooltip.multi_hit_summary__monte_carlo(parameters_body, parameters_head, num_attacks, head_hit_chance)
+
+    {
+        tooltip.push({
+                type = "text",
+                text = "Monte-Carlo calculation"
+        })
+
+        {
+            local text_hit_distribution = "<div class='maxi-damage-tooltip'>";
+            foreach (idx, value in hit_distribution) {
+                local icon_name = format("maxi_tt_num_hits_%x.png", idx)
+                text_hit_distribution += tooltip_fragment(icon_name, [value]);
+            }
+            text_hit_distribution += "</div>"
+            tooltip.push({
+                type = "text",
+                text = text_hit_distribution,
+                rawHTMLInText = true
+            })
+        }
+
+        local overall_kill_proba = 0;
+        for (local num_hits = 0; num_hits < num_attacks; num_hits++) {
+            overall_kill_proba += 1. * summary_info_mc[num_hits].kill_proba * hit_distribution[num_hits+1] / 100;
+        }
+
+        {
+            local marginal_kill_proba = overall_kill_proba * hitchance;
+
+            local text_kill = "<div class='maxi-damage-tooltip'>";
+            text_kill += tooltip_fragment("maxi_tt_kill_given_hit.png", [::Math.round(overall_kill_proba)]);
+            text_kill += tooltip_fragment("maxi_tt_marginal_kill.png", [::Math.round(marginal_kill_proba)]);
+            text_kill += "</div>"
+            tooltip.push({
+                type = "text",
+                text = text_kill,
+                rawHTMLInText = true
+            })
+        }
+
+        for (local num_hits = 0; num_hits < num_attacks; num_hits++) {
+            local total_armor_damage = summary_info_mc[num_hits].body_armor_damage + summary_info_mc[num_hits].head_armor_damage;
+            tooltip.push({
+                type = "text",
+                text = attack_info_tooltip_line(summary_info_mc[num_hits].kill_proba / 100, summary_info_mc[num_hits].health_damage, total_armor_damage, 100 - info.head_hit_chance, "hitchance.png"),
+                rawHTMLInText = true
+            })
+        }
+
+    }
+
+
+    {
+        tooltip.push({
+                type = "text",
+                text = "Smartfast calculation"
+        })
+
+        if (info.kill_proba >= 1)
+        {
+            local marginal_kill_proba = info.kill_proba * (100 - hit_distribution[0]) / 100;
+
+            local text_kill = "<div class='maxi-damage-tooltip'>";
+            text_kill += tooltip_fragment("maxi_tt_kill_given_hit.png", [::Math.round(info.kill_proba)]);
+            text_kill += tooltip_fragment("maxi_tt_marginal_kill.png", [::Math.round(marginal_kill_proba)]);
+            text_kill += "</div>"
+            tooltip.push({
+                type = "text",
+                text = text_kill,
+                rawHTMLInText = true
+            })
+        }
+
+        {
+            tooltip.push({
+                type = "text",
+                text =  attack_info_tooltip_line(info.distribution_head_health.proba, info.distribution_head_health.mean, info.distribution_head_armor.mean, info.head_hit_chance, "chance_to_hit_head.png"),
+                rawHTMLInText = true
+            })
+
+            tooltip.push({
+                type = "text",
+                text = attack_info_tooltip_line(info.distribution_body_health.proba, info.distribution_body_health.mean, info.distribution_body_armor.mean, 100 - info.head_hit_chance, "hitchance.png"),
+                rawHTMLInText = true
+            })
+        }
+
+    }
+
+    return tooltip
+}
+
+
+::ModMaxiTooltips.TacticalTooltip.attack_info_tooltip_split_man <- function(attacker, target, skill){
+    local hitchance = skill.getHitchance(target);
+    local head_hit_chance = ::ModMaxiTooltips.TacticalTooltip.compute_head_hit_chance(attacker, target, skill);
+
+    local tooltip = [];
+
+    local parameters_head = ::ModMaxiTooltips.TacticalTooltip.compute_parameters_from_attack(attacker, target, skill, ::Const.BodyPart.Head);
+    local parameters_body = ::ModMaxiTooltips.TacticalTooltip.compute_parameters_from_attack(attacker, target, skill, ::Const.BodyPart.Body);
+
+    local summary_info_mc = ::ModMaxiTooltips.TacticalTooltip.split_man_summary__monte_carlo(parameters_body, parameters_head);
+
+    {
+
+        tooltip.push({
+                type = "text",
+                text = "MonteCarlo calculation"
+        })
+
+        local kill_proba = head_hit_chance * summary_info_mc.summary_head.kill_proba / 100 + (100 - head_hit_chance) * summary_info_mc.summary_body.kill_proba / 100;
+
+        if (kill_proba >= 1)
+        {
+            local marginal_kill_proba = kill_proba * hitchance / 100;
+
+            local text_kill = "<div class='maxi-damage-tooltip'>";
+            text_kill += tooltip_fragment("maxi_tt_kill_given_hit.png", [::Math.round(kill_proba)]);
+            text_kill += tooltip_fragment("maxi_tt_marginal_kill.png", [::Math.round(marginal_kill_proba)]);
+            text_kill += "</div>"
+            tooltip.push({
+                type = "text",
+                text = text_kill,
+                rawHTMLInText = true
+            })
+        }
+
+        {
+            tooltip.push({
+                type = "text",
+                text =  attack_info_tooltip_line(summary_info_mc.summary_head.kill_proba / 100, summary_info_mc.summary_head.health_damage, summary_info_mc.summary_head.head_armor_damage, head_hit_chance, "chance_to_hit_head.png"),
+                rawHTMLInText = true
+            })
+
+            tooltip.push({
+                type = "text",
+                text =  attack_info_tooltip_line(summary_info_mc.summary_body.kill_proba / 100, summary_info_mc.summary_body.health_damage, summary_info_mc.summary_body.body_armor_damage, 100 - head_hit_chance, "hitchance.png"),
+                rawHTMLInText = true
+            })
+        }
+    }
 
     return tooltip
 }
