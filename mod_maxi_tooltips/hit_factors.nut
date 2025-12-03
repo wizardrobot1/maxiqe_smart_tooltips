@@ -50,7 +50,7 @@ local function getHitFactorSkillHitChanceBonus(skill, tile, user, myTile, target
     if (skill.m.HitChanceBonus > 0) {
         tooltips.push({
             icon = "ui/tooltips/positive.png",
-            text = green("+" + skill.m.HitChanceBonus + "%") + " " + ::ModMaxiTooltips.Mod.Tooltips.parseString(::ModMaxiTooltips.NestedTooltips.getNestedSkillName(skill))
+            text = green("+" + skill.m.HitChanceBonus + "%") + " " + ::ModMaxiTooltips.Mod.Tooltips.parseString(::ModMaxiTooltips.NestedTooltips.getNestedSkillName(skill, "entityId:" + user.getID()))
         });
     }
     return tooltips;
@@ -66,7 +66,7 @@ local function getHitFactorSkillTooCloseMalus(skill, tile, user, myTile, targetE
         local bonus = ::Math.abs(skill.m.HitChanceBonus);
         tooltips.push({
             icon = "ui/tooltips/negative.png",
-            text = red("-" + bonus + "%") + " Too close"
+            text = red("-" + bonus + "%") + " Too close! " + ::ModMaxiTooltips.Mod.Tooltips.parseString(::ModMaxiTooltips.NestedTooltips.getNestedSkillName(skill, "entityId:" + user.getID()))
         });
     }
     return tooltips;
@@ -82,7 +82,7 @@ local function getHitFactorSkillUniversalMalus(skill, tile, user, myTile, target
         local malus = ::Math.abs(skill.m.HitChanceBonus)
         tooltips.push({
             icon = "ui/tooltips/negative.png",
-            text = red("-" + malus + "%") + " " + ::ModMaxiTooltips.Mod.Tooltips.parseString(::ModMaxiTooltips.NestedTooltips.getNestedSkillName(skill))
+            text = red("-" + malus + "%") + " " + ::ModMaxiTooltips.Mod.Tooltips.parseString(::ModMaxiTooltips.NestedTooltips.getNestedSkillName(skill, "entityId:" + user.getID()))
         });
     }
     return tooltips;
@@ -100,14 +100,14 @@ local function getHitFactorSkillHitChanceModifier(skill, tile, user, myTile, tar
         if (diff > 0) {
             tooltips.push({
                 icon = "ui/tooltips/positive.png",
-                text = green("+" + diff + "%") + " " + ::ModMaxiTooltips.Mod.Tooltips.parseString(::ModMaxiTooltips.NestedTooltips.getNestedSkillName(skill))
+                text = green("+" + diff + "%") + " " + ::ModMaxiTooltips.Mod.Tooltips.parseString(::ModMaxiTooltips.NestedTooltips.getNestedSkillName(skill, "entityId:" + user.getID()))
             });
         }
         if (diff < 0) {
             diff = ::Math.abs(diff);
             tooltips.push({
                 icon = "ui/tooltips/negative.png",
-                text = red("-" + diff + "%") + " " + ::ModMaxiTooltips.Mod.Tooltips.parseString(::ModMaxiTooltips.NestedTooltips.getNestedSkillName(skill))
+                text = red("-" + diff + "%") + " " + ::ModMaxiTooltips.Mod.Tooltips.parseString(::ModMaxiTooltips.NestedTooltips.getNestedSkillName(skill, "entityId:" + user.getID()))
             });
         }
     }
@@ -159,18 +159,21 @@ local function getHitFactorHeightAdvantage(skill, tile, user, myTile, targetEnti
 }
 
 
-// Target is on bad terrain
+// Target is on swamp
 local function getHitFactorTargetOnBadTerrain(skill, tile, user, myTile, targetEntity, distanceToTarget)
 {
     local tooltips = [];
-    if (tile.IsBadTerrain)
+
+    local skill = targetEntity.getSkills().getSkillByID("terrain.swamp");
+    if (skill)
     {
         local malus = skill.m.IsRanged? 25 : 25;
         if (malus > 0) {
             local attribute_name = skill.m.IsRanged? "Ranged Defense" : "Melee Defense";
             tooltips.push({
                 icon = "ui/tooltips/positive.png",
-                text = "Target on swamp " + red("-" + malus + "%") + " " + attribute_name
+                // text = "Target on swamp " + red("-" + malus + "%") + " " + attribute_name
+                text = ::ModMaxiTooltips.Mod.Tooltips.parseString(format("[%s|Skill+%s]", "Target on swamp", skill.ClassName))
             });
         }
     }
@@ -191,7 +194,9 @@ local function getHitFactorFastAdaptationBonus(skill, tile, user, myTile, target
             local bonus = 10 * fast_adaptation.m.Stacks;
             tooltips.push({
                 icon = "ui/tooltips/positive.png",
-                text = green("+" + bonus + "%") + " " + nested_tooltip(format("Fast Adaption (%i)", fast_adaptation.m.Stacks),"Skill",fast_adaptation.ClassName)
+                text = green("+" + bonus + "%") + " "
+                + ::ModMaxiTooltips.Mod.Tooltips.parseString(::ModMaxiTooltips.NestedTooltips.getNestedSkillName(skill, "entityId:" + user.getID()))
+                + format("(%i)", fast_adaptation.m.Stacks)
             });
         }
     }
@@ -217,7 +222,7 @@ local function getHitFactorOathOfWrath(skill, tile, user, myTile, targetEntity, 
                 local bonus = 15
                 tooltips.push({
                     icon = "ui/tooltips/positive.png",
-                    text = green("+" + bonus + "%")+ " " + nested_tooltip("Oath of Wrath","Skill",oath.ClassName)
+                    text = green("+" + bonus + "%")+ " " + ::ModMaxiTooltips.Mod.Tooltips.parseString(::ModMaxiTooltips.NestedTooltips.getNestedSkillName(oath, "entityId:" + user.getID()))
                 });
             }
         }
@@ -243,10 +248,12 @@ local function getHitFactorHeightDisadvantage(skill, tile, user, myTile, targetE
 }
 
 
-// Malus from bad terrain
+// Malus from swamp
 local function getHitFactorMalusFromBadTerrain(skill, tile, user, myTile, targetEntity, distanceToTarget)
 {
     local tooltips = [];
+
+    local skill = user.getSkills().getSkillByID("terrain.swamp");
     if (myTile.IsBadTerrain)
     {
         local malus = skill.m.IsRanged? 0 : 25;
@@ -254,7 +261,8 @@ local function getHitFactorMalusFromBadTerrain(skill, tile, user, myTile, target
             local attribute_name = skill.m.IsRanged? "Ranged Skill" : "Melee Skill";
             tooltips.push({
                 icon = "ui/tooltips/negative.png",
-                text = "On swamp " + red("-" + malus + "%") + " " + attribute_name
+                // text = "On swamp " + red("-" + malus + "%") + " " + attribute_name
+                text = ::ModMaxiTooltips.Mod.Tooltips.parseString(format("[%s|Skill+%s]", "Standing on swamp", skill.ClassName))
             });
         }
     }
@@ -305,12 +313,12 @@ local function getHitFactorShieldwall(skill, tile, user, myTile, targetEntity, d
                 local adjacencyBonus = ::Math.abs(shieldwallEffect.getBonus());
                 tooltips.push({
                     icon = "ui/tooltips/negative.png",
-                    text = red("-" + (shieldBonus) + "%") + " " + nested_tooltip("Shieldwall", "Skill", shieldwallEffect.ClassName)
+                    text = red("-" + (shieldBonus) + "%") + " " + ::ModMaxiTooltips.Mod.Tooltips.parseString(::ModMaxiTooltips.NestedTooltips.getNestedSkillName(shieldwall, "entityId:" + targetEntity.getID()))
                 });
                 if (adjacencyBonus) {
                     tooltips.push({
                         icon = "ui/tooltips/negative.png",
-                        text = red("-" + (adjacencyBonus) + "%") + " " + nested_tooltip("Adjacency Bonus", "Skill", shieldwallEffect.ClassName)
+                        text = red("-" + (adjacencyBonus) + "%") + " adjacency bonus"
                     });
                 }
             }
@@ -329,7 +337,7 @@ local function getHitFactorAlertRiposte(skill, tile, user, myTile, targetEntity,
         local riposte = targetEntity.getSkills().hasSkill("effects.riposte");
         tooltips.push({
             icon = "ui/tooltips/warning.png",
-            text = nested_tooltip("Riposte", "Skill", riposte.ClassName)
+            text = ::ModMaxiTooltips.Mod.Tooltips.parseString(::ModMaxiTooltips.NestedTooltips.getNestedSkillName(riposte, "entityId:" + targetEntity.getID()))
         });
     }
     return tooltips;
@@ -348,7 +356,7 @@ local function getHitFactorAlertNineLives(skill, tile, user, myTile, targetEntit
         {
             tooltips.push({
                 icon = "ui/tooltips/warning.png",
-                text = nested_tooltip("Nine lives", "Skill", nineLivesSkill.ClassName)
+                text = ::ModMaxiTooltips.Mod.Tooltips.parseString(::ModMaxiTooltips.NestedTooltips.getNestedSkillName(nineLivesSkill, "entityId:" + targetEntity.getID()))
             });
         }
     }
@@ -411,11 +419,12 @@ local function getHitFactorBlockedLineOfSightMalus(skill, tile, user, myTile, ta
 local function getHitFactorNighttimeModifier(skill, tile, user, myTile, targetEntity, distanceToTarget)
 {
     local tooltips = [];
-    if (skill.m.IsRanged && user.getCurrentProperties().IsAffectedByNight && user.getSkills().hasSkill("special.night"))
+    local nighttime = user.getSkills().hasSkill("special.night");
+    if (skill.m.IsRanged && user.getCurrentProperties().IsAffectedByNight && nighttime)
     {
         tooltips.push({
             icon = "ui/tooltips/negative.png",
-            text = "Nighttime" + " " + red("-" + 30 + "%") + " Ranged Skill"
+            text = ::ModMaxiTooltips.Mod.Tooltips.parseString(::ModMaxiTooltips.NestedTooltips.getNestedSkillName(nighttime, "entityId:" + user.getID())) + " " + red("-" + 30 + "%") + " Ranged Skill"
         });
     }
     return tooltips;
@@ -471,7 +480,7 @@ local function getHitFactorDamageResistance(skill, tile, user, myTile, targetEnt
             {
                 local damage_reduction_skill_tt = "";
                 if ("getTooltip" in damage_reduction_skill) {
-                    damage_reduction_skill_tt = nested_tooltip(damage_reduction_skill.getName(), "Skill", damage_reduction_skill.ClassName) + " ";
+                    damage_reduction_skill_tt = ::ModMaxiTooltips.Mod.Tooltips.parseString(::ModMaxiTooltips.NestedTooltips.getNestedSkillName(damage_reduction_skill, "entityId:" + targetEntity.getID()));
                 }
                 local propertiesBefore = targetEntity.getCurrentProperties();
                 local hitInfo = clone ::Const.Tactical.HitInfo;
@@ -493,7 +502,7 @@ local function getHitFactorDamageResistance(skill, tile, user, myTile, targetEnt
                         if (diff > 0) {
                             tooltips.push({
                                 icon = "ui/tooltips/positive.png",
-                                text = damage_reduction_skill_tt + green("+" + diff + "%") + " " + description
+                                text = damage_reduction_skill_tt + " " + green("+" + diff + "%") + " " + description
                             });
                         }
 

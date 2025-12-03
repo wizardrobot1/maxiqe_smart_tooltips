@@ -15,7 +15,7 @@ local queueLoadOrder = [">mod_msu", ">mod_modern_hooks", ">mod_nested_tooltips"]
 	"mod_msu >= 1.2.7",
 	"mod_modern_hooks >= 0.4.10",
 	"mod_nested_tooltips >= 0.2.0",
-	"mod_tooltip_extension >= 2.0.0",
+	"mod_tooltip_extension >= 2.0.0"
 );
 ::ModMaxiTooltips.ModHook.queue(queueLoadOrder, function()
 {

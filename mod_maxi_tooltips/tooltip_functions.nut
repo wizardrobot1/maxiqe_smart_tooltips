@@ -475,10 +475,10 @@ if (!("TacticalTooltip" in ::ModMaxiTooltips)) {
 				id = _startID++,
 				type = "text",
 				icon = skill.getIcon(),
-				text = ::Reforged.Mod.Tooltips.parseString(
+				text = ::ModMaxiTooltips.Mod.Tooltips.parseString(
 					format(
 						"%s (%s, %s)",
-						::Reforged.NestedTooltips.getNestedSkillName(skill, extraData),
+						::ModMaxiTooltips.NestedTooltips.getNestedSkillName(skill, extraData),
 						::MSU.Text.colorNegative(skill.getActionPointCost()),
 						::MSU.Text.colorPositive(skill.getFatigueCost())
 					)
