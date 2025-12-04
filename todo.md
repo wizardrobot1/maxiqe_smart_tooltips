@@ -6,15 +6,35 @@
     - "Perk+" tooltips not working?
         - check if it works in legends?
 
+## Test
+
+- test in scenario?
+
+- check hit factors tooltips
+- check swamp hit factor popup
+- check riposte
+- x check nine lines
+- check shieldwall with bonus
+- check night hit factor popup
+- check racials
+- x check items on actor and ground
+- x check perks
+- x check actives
+- check displayed hit chance on tooltip versus in log
+
+- remove `::ModMaxiTooltips.Mod.Debug` in all files
+
 # Improvements for v1.1
 
 - MSU: enable RawHtml in all tooltips
 
+- Add nested tooltip icons to hit factors
+
 - Add nested tooltips to hit factors:
 
-    - swamp
+    - x swamp
     - defender abilities
-    - night-time
+    - x night-time
 
 - hit factor: add defender reduced RD during nighttime
 

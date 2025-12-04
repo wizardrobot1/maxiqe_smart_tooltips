@@ -308,9 +308,9 @@ local function getHitFactorShieldwall(skill, tile, user, myTile, targetEntity, d
         {
             shieldBonus = (skill.m.IsRanged ? shield.getRangedDefense() : shield.getMeleeDefense()) * (targetEntity.getCurrentProperties().IsSpecializedInShields ? 1.25 : 1.0);
             shieldBonus = ::Math.abs(shieldBonus);
-            local shieldwallEffect = targetEntity.getSkills().getSkillByID("effects.shieldwall");
-            if (shieldBonus > 0 && shieldwallEffect) {
-                local adjacencyBonus = ::Math.abs(shieldwallEffect.getBonus());
+            local shieldwall = targetEntity.getSkills().getSkillByID("effects.shieldwall");
+            if (shieldBonus > 0 && shieldwall) {
+                local adjacencyBonus = ::Math.abs(shieldwall.getBonus());
                 tooltips.push({
                     icon = "ui/tooltips/negative.png",
                     text = red("-" + (shieldBonus) + "%") + " " + ::ModMaxiTooltips.Mod.Tooltips.parseString(::ModMaxiTooltips.NestedTooltips.getNestedSkillName(shieldwall, "entityId:" + targetEntity.getID()))
@@ -332,13 +332,15 @@ local function getHitFactorShieldwall(skill, tile, user, myTile, targetEntity, d
 local function getHitFactorAlertRiposte(skill, tile, user, myTile, targetEntity, distanceToTarget)
 {
     local tooltips = [];
-    if (targetEntity && myTile.getDistanceTo(tile) <= 1 && targetEntity.getSkills().hasSkill("effects.riposte") && !skill.isIgnoringRiposte())
+    if (targetEntity && myTile.getDistanceTo(tile) <= 1 && !skill.isIgnoringRiposte())
     {
-        local riposte = targetEntity.getSkills().hasSkill("effects.riposte");
-        tooltips.push({
-            icon = "ui/tooltips/warning.png",
-            text = ::ModMaxiTooltips.Mod.Tooltips.parseString(::ModMaxiTooltips.NestedTooltips.getNestedSkillName(riposte, "entityId:" + targetEntity.getID()))
-        });
+        local riposte = targetEntity.getSkills().getSkillByID("effects.riposte");
+        if (riposte) {
+            tooltips.push({
+                icon = "ui/tooltips/warning.png",
+                text = ::ModMaxiTooltips.Mod.Tooltips.parseString(::ModMaxiTooltips.NestedTooltips.getNestedSkillName(riposte, "entityId:" + targetEntity.getID()))
+            });
+        }
     }
     return tooltips;
 }

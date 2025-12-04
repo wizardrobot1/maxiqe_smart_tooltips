@@ -286,10 +286,9 @@ if (!("TacticalTooltip" in ::ModMaxiTooltips)) {
 				id = currentID,
 				type = "text",
 				icon = perkDef != null ? perkDef.Icon : perk.getIcon(),
-				// TODO: check if this works, and remove
-				// text = ::ModMaxiTooltips.Mod.Tooltips.parseString(::ModMaxiTooltips.NestedTooltips.getNestedPerkName(perk))
-                // text = ::ModMaxiTooltips.Mod.Tooltips.parseString(::ModMaxiTooltips.NestedTooltips.getNestedSkillName(perk))
-				text = ::ModMaxiTooltips.Mod.parseString(::ModMaxiTooltips.NestedTooltips.getNestedPerkName(perk, extraData)),
+				// TODO: check why perk doesn't work
+				text = ::ModMaxiTooltips.Mod.Tooltips.parseString(::ModMaxiTooltips.NestedTooltips.getNestedPerkName(perk, extraData)),
+				// text = ::ModMaxiTooltips.Mod.Tooltips.parseString(::ModMaxiTooltips.NestedTooltips.getNestedSkillName(perk, extraData)),
 			};
 			currentID++;
 
@@ -306,8 +305,10 @@ if (!("TacticalTooltip" in ::ModMaxiTooltips)) {
 				if (::ModMaxiTooltips.Mod.ModSettings.getSetting("ShowStatusPerkAndEffect").getValue() == false) {}
 					if (!perk.isHidden() && perk.isType(::Const.SkillType.StatusEffect)) continue;
 
-				entryText += ::ModMaxiTooltips.NestedTooltips.getNestedPerkName(perk, extraData) + ", ";
-			}
+					// TODO
+					entryText += ::ModMaxiTooltips.NestedTooltips.getNestedPerkName(perk, extraData) + ", ";
+					// entryText += ::ModMaxiTooltips.NestedTooltips.getNestedSkillName(perk, extraData) + ", ";
+				}
 			if (entryText != "") entryText = entryText.slice(0, -2);
 		}
 		else
@@ -317,8 +318,10 @@ if (!("TacticalTooltip" in ::ModMaxiTooltips)) {
 				if (::ModMaxiTooltips.Mod.ModSettings.getSetting("ShowStatusPerkAndEffect").getValue() == false)
 					if (!perk.isHidden() && perk.isType(::Const.SkillType.StatusEffect)) continue;
 
-				entryText += ::ModMaxiTooltips.NestedTooltips.getNestedPerkImage(perk, extraData);
-			}
+					// TODO
+					entryText += ::ModMaxiTooltips.NestedTooltips.getNestedPerkImage(perk, extraData);
+					// entryText += ::ModMaxiTooltips.NestedTooltips.getNestedSkillImage(perk, extraData);
+				}
 		}
 
 		perkList.push({

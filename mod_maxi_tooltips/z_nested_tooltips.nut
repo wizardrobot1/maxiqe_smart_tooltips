@@ -82,20 +82,41 @@ local getThresholdForInjury = function( _script )
 	function getNestedPerkName( _obj, _extraData = null )
 	{
 		local perkDef = ::Const.Perks.findById(_obj.getID());
-		return format("[%s|Perk+%s%s]", perkDef != null ? perkDef.Name : _obj.m.Name, _obj.ClassName, _extraData == null ? "" : "," + _extraData);
+
+		// TODO: remove logging and restore
+		// return format("[%s|Perk+%s%s]", perkDef != null ? perkDef.Name : _obj.m.Name, _obj.ClassName, _extraData == null ? "" : "," + _extraData);
+		// local res = format("[%s|Perk+%s%s]", perkDef != null ? perkDef.Name : _obj.m.Name, _obj.ClassName, _extraData == null ? "" : "," + _extraData);
+
+		// Temporary fix: use as skill instead
+		local res = format("[%s|Skill+%s%s]", perkDef != null ? perkDef.Name : _obj.m.Name, _obj.ClassName, _extraData == null ? "" : "," + _extraData);
+		::ModMaxiTooltips.Mod.Debug.printLog("MaxiTT; nested skill name; res = " + res);
+		return res
 	}
 
 	function getNestedPerkImage( _obj, _extraData = null )
 	{
 		local perkDef = ::Const.Perks.findById(_obj.getID());
-		return format("[Img/gfx/%s|Perk+%s%s]", perkDef != null ? perkDef.Icon : _obj.getIcon(), _obj.ClassName, _extraData == null ? "" : "," + _extraData);
+
+		// TODO: remove logging and restore
+		// return format("[Img/gfx/%s|Perk+%s%s]", perkDef != null ? perkDef.Icon : _obj.getIcon(), _obj.ClassName, _extraData == null ? "" : "," + _extraData);
+		// local res = format("[Img/gfx/%s|Perk+%s%s]", perkDef != null ? perkDef.Icon : _obj.getIcon(), _obj.ClassName, _extraData == null ? "" : "," + _extraData);
+
+		// Temporary fix: use as skill instead
+		local res = format("[Img/gfx/%s|Skill+%s%s]", perkDef != null ? perkDef.Icon : _obj.getIcon(), _obj.ClassName, _extraData == null ? "" : "," + _extraData);
+		::ModMaxiTooltips.Mod.Debug.printLog("MaxiTT; nested skill name; res = " + res);
+		return res
 	}
 
 	function getNestedSkillName( _obj, _extraData = null, _getName = false )
 	{
 		// We use `.m.Name` instead of `getName()` because some skills (e.g. status effects)
 		// modify the name during getName() e.g. to add info about the number of stacks
-		return format("[%s|Skill+%s%s]", _getName ? _obj.getName() : _obj.m.Name, _obj.ClassName, _extraData == null ? "" : "," + _extraData);
+
+		// TODO: remove logging and restore
+		// return format("[%s|Skill+%s%s]", _getName ? _obj.getName() : _obj.m.Name, _obj.ClassName, _extraData == null ? "" : "," + _extraData);
+		local res = format("[%s|Skill+%s%s]", _getName ? _obj.getName() : _obj.m.Name, _obj.ClassName, _extraData == null ? "" : "," + _extraData);
+		::ModMaxiTooltips.Mod.Debug.printLog("MaxiTT; nested skill name; res = " + res);
+		return res
 	}
 
 	function getNestedSkillImage( _obj, _extraData = null, _checkUsability = false )
