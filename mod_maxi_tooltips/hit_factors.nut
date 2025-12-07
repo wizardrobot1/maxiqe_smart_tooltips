@@ -254,7 +254,6 @@ local function getHitFactorMalusFromBadTerrain(skill, tile, user, myTile, target
             local attribute_name = skill.m.IsRanged? "Ranged Skill" : "Melee Skill";
             tooltips.push({
                 icon = "ui/tooltips/negative.png",
-                // text = "On swamp " + red("-" + malus + "%") + " " + attribute_name
                 text = ::ModMaxiTooltips.Mod.Tooltips.parseString(format("[%s|Skill+%s]", "Standing on swamp", swamp.ClassName))
             });
         }
