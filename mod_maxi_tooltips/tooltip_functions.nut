@@ -56,7 +56,7 @@ if (!("TacticalTooltip" in ::ModMaxiTooltips)) {
                 id = 10,
                 type = "headerText",
                 icon = "ui/icons/hitchance.png",
-                text = "[color=" + ::Const.UI.Color.PositiveValue + "]" + skill.getHitchance(entity) + "%[/color] chance to hit",
+                text = "命中几率为 [color=" + ::Const.UI.Color.PositiveValue + "]" + skill.getHitchance(entity) + "%[/color]",
                 children = children,
             });
         }
@@ -77,9 +77,9 @@ if (!("TacticalTooltip" in ::ModMaxiTooltips)) {
 
     tooltip.extend(::ModMaxiTooltips.TacticalTooltip.hitChanceTooltip(entity, skill));
 
-    local acting_text = ::Tactical.TurnSequenceBar.getActiveEntity() == entity ? "Acting right now!" : entity.m.IsTurnDone || turnsToGo == null ? "Turn done" : "Acts in " + turnsToGo + (turnsToGo > 1 ? " turns" : " turn");
+    local acting_text = ::Tactical.TurnSequenceBar.getActiveEntity() == entity ? "正在行动！" : entity.m.IsTurnDone || turnsToGo == null ? "回合结束" : "将在 " + turnsToGo + " 回合后行动";
     if (entity.m.IsActingEachTurn && !entity.m.IsTurnDone && entity.isWaitActionSpent() && !(::Tactical.TurnSequenceBar.getActiveEntity() == entity)){
-        acting_text = ModMaxiTooltips.Mod.Tooltips.parseString("Acts [again|Concept.Wait] in " + turnsToGo + (turnsToGo > 1 ? " turns" : " turn"));
+        acting_text = ModMaxiTooltips.Mod.Tooltips.parseString("将在 " + turnsToGo + " 回合后 [再次行动|Concept.Wait]");
     }
 
     tooltip.extend([
@@ -195,7 +195,7 @@ if (!("TacticalTooltip" in ::ModMaxiTooltips)) {
 	local extraData = "entityId:" + entity.getID();
 
 	local statusEffects = entity.getSkills().query(::Const.SkillType.StatusEffect | ::Const.SkillType.PermanentInjury, false, true);
-	if (statusEffects.len() != 0 || ::ModMaxiTooltips.Mod.ModSettings.getSetting("HeaderForEmptyCategories").getValue() == true) ::ModMaxiTooltips.TacticalTooltip.pushSectionName(effectList, "Effects", currentID);
+	if (statusEffects.len() != 0 || ::ModMaxiTooltips.Mod.ModSettings.getSetting("HeaderForEmptyCategories").getValue() == true) ::ModMaxiTooltips.TacticalTooltip.pushSectionName(effectList, "状态效果", currentID);
 	currentID++;
 
 	statusEffects.sort(@(_a,_b) _a.getName() <=> _b.getName());
@@ -268,7 +268,7 @@ if (!("TacticalTooltip" in ::ModMaxiTooltips)) {
 	local extraData = "entityId:" + entity.getID();
 
 	local perks = entity.getSkills().query(::Const.SkillType.Perk, true, true);
-	if (perks.len() != 0 || ::ModMaxiTooltips.Mod.ModSettings.getSetting("HeaderForEmptyCategories").getValue() == true) ::ModMaxiTooltips.TacticalTooltip.pushSectionName(perkList, "Perks", currentID);
+	if (perks.len() != 0 || ::ModMaxiTooltips.Mod.ModSettings.getSetting("HeaderForEmptyCategories").getValue() == true) ::ModMaxiTooltips.TacticalTooltip.pushSectionName(perkList, "专长", currentID);
 	currentID++;
 
 	// Sometimes perks add information through their getName(). That is only relevant for the 'Effects' section and should be discarded under 'Perks'
@@ -339,7 +339,7 @@ if (!("TacticalTooltip" in ::ModMaxiTooltips)) {
 	local offhandItems = entity.getItems().getAllItemsAtSlot(::Const.ItemSlot.Offhand);
 	local accessories = entity.getItems().getAllItemsAtSlot(::Const.ItemSlot.Accessory);
 
-	if (mainhandItems.len() != 0 || offhandItems.len() != 0 || accessories.len() != 0 || ::ModMaxiTooltips.Mod.ModSettings.getSetting("HeaderForEmptyCategories").getValue() == true) ::ModMaxiTooltips.TacticalTooltip.pushSectionName(itemList, "Equipped Items", currentID);
+	if (mainhandItems.len() != 0 || offhandItems.len() != 0 || accessories.len() != 0 || ::ModMaxiTooltips.Mod.ModSettings.getSetting("HeaderForEmptyCategories").getValue() == true) ::ModMaxiTooltips.TacticalTooltip.pushSectionName(itemList, "装备物品", currentID);
 	currentID++;
 
 	local actorID = entity.getID();
@@ -387,7 +387,7 @@ if (!("TacticalTooltip" in ::ModMaxiTooltips)) {
 	local actorID = entity.getID();
 
 	local bagItems = entity.getItems().getAllItemsAtSlot(::Const.ItemSlot.Bag);
-	if (bagItems.len() != 0 || ::ModMaxiTooltips.Mod.ModSettings.getSetting("HeaderForEmptyCategories").getValue() == true) ::ModMaxiTooltips.TacticalTooltip.pushSectionName(itemList, "Items in bag", currentID);
+	if (bagItems.len() != 0 || ::ModMaxiTooltips.Mod.ModSettings.getSetting("HeaderForEmptyCategories").getValue() == true) ::ModMaxiTooltips.TacticalTooltip.pushSectionName(itemList, "背包物品", currentID);
 	currentID++;
 
 	foreach(bagItem in bagItems)
@@ -413,7 +413,7 @@ if (!("TacticalTooltip" in ::ModMaxiTooltips)) {
 	local groundItems = entity.getTile().Items;
 	if (groundItems.len() != 0)
 	{
-		::ModMaxiTooltips.TacticalTooltip.pushSectionName(itemList, "Items on ground", currentID);
+		::ModMaxiTooltips.TacticalTooltip.pushSectionName(itemList, "地面物品", currentID);
 		currentID++;
 		foreach(groundItem in groundItems)
 		{
@@ -460,7 +460,7 @@ if (!("TacticalTooltip" in ::ModMaxiTooltips)) {
 
 	if (skills.len() != 0 || ::ModMaxiTooltips.Mod.ModSettings.getSetting("HeaderForEmptyCategories").getValue() == true)
 	{
-		::ModMaxiTooltips.TacticalTooltip.pushSectionName(ret, "Actives", _startID);
+		::ModMaxiTooltips.TacticalTooltip.pushSectionName(ret, "主动技能", _startID);
 		_startID++;
 	}
 

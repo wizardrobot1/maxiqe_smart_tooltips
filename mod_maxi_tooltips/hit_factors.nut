@@ -59,7 +59,7 @@ local function getHitFactorSkillTooCloseMalus(skill, tile, user, myTile, targetE
         local malus = ::Math.abs(skill.m.HitChanceBonus);
         tooltips.push({
             icon = "ui/tooltips/negative.png",
-            text = red("-" + malus + "%") + " Too close! " + ::ModMaxiTooltips.Mod.Tooltips.parseString(::ModMaxiTooltips.NestedTooltips.getNestedSkillName(skill, "entityId:" + user.getID()))
+            text = red("-" + malus + "%") + " 距离太近！" + ::ModMaxiTooltips.Mod.Tooltips.parseString(::ModMaxiTooltips.NestedTooltips.getNestedSkillName(skill, "entityId:" + user.getID()))
         });
     }
     return tooltips;
@@ -121,13 +121,13 @@ local function getHitFactorBonusFromSurrounding(skill, tile, user, myTile, targe
             {
                 tooltips.push({
                     icon = "ui/tooltips/positive.png",
-                    text = green("+" + malus + "%") + " " + "Surrounded"
+                    text = green("+" + malus + "%") + " " + "被围攻"
                 });
             }
         } else {
             tooltips.push({
                 icon = "ui/tooltips/warning.png",
-                text = "Immune to surrounding"
+                text = "免疫包围"
             });
         }
     }
@@ -145,7 +145,7 @@ local function getHitFactorHeightAdvantage(skill, tile, user, myTile, targetEnti
         local bonus = ::Math.abs(::Const.Combat.LevelDifferenceToHitBonus);
         tooltips.push({
             icon = "ui/tooltips/positive.png",
-            text = green("+" + bonus + "%") + " " + "Height advantage"
+            text = green("+" + bonus + "%") + " " + "高度优势"
         });
     }
     return tooltips;
@@ -165,7 +165,7 @@ local function getHitFactorTargetOnBadTerrain(skill, tile, user, myTile, targetE
             local attribute_name = skill.m.IsRanged? "Ranged Defense" : "Melee Defense";
             tooltips.push({
                 icon = "ui/tooltips/positive.png",
-                text = ::ModMaxiTooltips.Mod.Tooltips.parseString(format("[%s|Skill+%s]", "Target on swamp", swamp.ClassName))
+                text = ::ModMaxiTooltips.Mod.Tooltips.parseString(format("[%s|Skill+%s]", "目标身处沼泽", swamp.ClassName))
             });
         }
     }
@@ -234,7 +234,7 @@ local function getHitFactorHeightDisadvantage(skill, tile, user, myTile, targetE
         local malus = ::Math.abs(::Const.Combat.LevelDifferenceToHitMalus * levelDifference);
         tooltips.push({
             icon = "ui/tooltips/negative.png",
-            text = red("-" + malus + "%") + " " + "Height disadvantage"
+            text = red("-" + malus + "%") + " " + "高度劣势"
         });
     }
     return tooltips;
@@ -254,7 +254,7 @@ local function getHitFactorMalusFromBadTerrain(skill, tile, user, myTile, target
             local attribute_name = skill.m.IsRanged? "Ranged Skill" : "Melee Skill";
             tooltips.push({
                 icon = "ui/tooltips/negative.png",
-                text = ::ModMaxiTooltips.Mod.Tooltips.parseString(format("[%s|Skill+%s]", "Standing on swamp", swamp.ClassName))
+                text = ::ModMaxiTooltips.Mod.Tooltips.parseString(format("[%s|Skill+%s]", "兄弟身处沼泽", swamp.ClassName))
             });
         }
     }
@@ -278,7 +278,7 @@ local function getHitFactorArmedWithShield(skill, tile, user, myTile, targetEnti
             if (skill.m.IsShieldRelevant) {
                 tooltips.push({
                     icon = "ui/tooltips/negative.png",
-                    text = red("-" + (shieldBonus) + "%") + " " + "Armed with shield"
+                    text = red("-" + (shieldBonus) + "%") + " " + "装备盾牌"
                 });
             }
 
@@ -310,7 +310,7 @@ local function getHitFactorShieldwall(skill, tile, user, myTile, targetEntity, d
                 if (!skill.m.IsRanged && adjacencyBonus) {
                     tooltips.push({
                         icon = "ui/tooltips/negative.png",
-                        text = red("-" + (adjacencyBonus) + "%") + " " + "shieldwall adjacency bonus"
+                        text = red("-" + (adjacencyBonus) + "%") + " " + "盾墙邻接加成"
                     });
                 }
             }
@@ -392,7 +392,7 @@ local function getHitFactorDistanceModifier(skill, tile, user, myTile, targetEnt
                     icon = "ui/tooltips/negative.png",
                     text = red("-" + malus + "%") + " "
                     // TODO: tooltip with customized text
-                    + "Distance of " + distanceToTarget,
+                    + "距离 " + distanceToTarget,
                 });
             }
         }
@@ -418,7 +418,7 @@ local function getHitFactorBlockedLineOfSightMalus(skill, tile, user, myTile, ta
                 blockChance = ::Math.abs(::Math.ceil(blockChance * 100));
                 tooltips.push({
                     icon = "ui/tooltips/negative.png",
-                    text = red("-" + blockChance + "%") + " " + "Line of fire blocked"
+                    text = red("-" + blockChance + "%") + " " + "射击线受阻"
                 });
             }
         }
@@ -436,7 +436,7 @@ local function getHitFactorNighttimeModifier(skill, tile, user, myTile, targetEn
     {
         tooltips.push({
             icon = "ui/tooltips/negative.png",
-            text = " " + red("-" + 30 + "%") + " Ranged Skill in "
+            text = " " + red("-" + 30 + "%") + " 远程技能于 "
                     + ::ModMaxiTooltips.Mod.Tooltips.parseString(::ModMaxiTooltips.NestedTooltips.getNestedSkillName(nighttime, "entityId:" + user.getID(), true))
         });
     }
@@ -454,14 +454,14 @@ local function getHitFactorLungeDamageModifier(skill, tile, user, myTile, target
         if (diff > 0) {
             tooltips.push({
                 icon = "ui/tooltips/positive.png",
-                text = "High initiative " + green("+" + diff + "%") + " " + "Lunge damage"
+                text = "主动值高 " + green("+" + diff + "%") + " " + "突刺伤害"
             });
         }
         if (diff < 0) {
             diff = ::Math.abs(diff);
             tooltips.push({
                 icon = "ui/tooltips/negative.png",
-                text = "Low initiative " + red("-" + diff + "%") + " " + "Lunge damage"
+                text = "主动值低 " + red("-" + diff + "%") + " " + "突刺伤害"
             });
         }
     }
@@ -493,7 +493,7 @@ local function getHitFactorDamageResistance(skill, tile, user, myTile, targetEnt
             {
                 local damage_reduction_skill_tt = "";
                 if (skill.m.Name == "") {
-                    damage_reduction_skill_tt = "Damage resistance";
+                    damage_reduction_skill_tt = "伤害抗性";
                 } else {
                     damage_reduction_skill_tt = ::ModMaxiTooltips.Mod.Tooltips.parseString(::ModMaxiTooltips.NestedTooltips.getNestedSkillName(damage_reduction_skill, "entityId:" + targetEntity.getID()));
                 }
@@ -505,8 +505,8 @@ local function getHitFactorDamageResistance(skill, tile, user, myTile, targetEnt
                 damage_reduction_skill.onBeforeDamageReceived(user, skill, hitInfo, propertiesAfter);
 
                 local paired_properties_description = [
-                    ["DamageReceivedRegularMult", "health damage"],
-                    ["DamageReceivedArmorMult", "armor damage"]
+                    ["DamageReceivedRegularMult", "生命值伤害"],
+                    ["DamageReceivedArmorMult", "护甲伤害"]
                 ]
                 foreach (paired_info in paired_properties_description) {
                     local property_name = paired_info[0];
@@ -548,7 +548,7 @@ local function getHitFactorImmunityStun(skill, tile, user, myTile, targetEntity,
         {
             tooltips.push({
                 icon = "ui/tooltips/warning.png",
-                text = "Immune to stun"
+                text = "免疫眩晕"
             });
         }
     }
@@ -565,7 +565,7 @@ local function getHitFactorImmunityRoot(skill, tile, user, myTile, targetEntity,
         {
             tooltips.push({
                 icon = "ui/tooltips/warning.png",
-                text = "Immune to being rooted"
+                text = "免疫定身"
             });
         }
     }
@@ -582,7 +582,7 @@ local function getHitFactorImmunityDisarmed(skill, tile, user, myTile, targetEnt
         {
             tooltips.push({
                 icon = "ui/tooltips/warning.png",
-                text = "Immune to being disarmed"
+                text = "免疫缴械"
             });
         }
     }
@@ -599,7 +599,7 @@ local function getHitFactorImmunityForcedMovement(skill, tile, user, myTile, tar
         {
             tooltips.push({
                 icon = "ui/tooltips/warning.png",
-                text = "Immune to being knocked back or hooked"
+                text = "免疫击退和抓取"
             });
         }
     }
