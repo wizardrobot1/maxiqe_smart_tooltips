@@ -167,6 +167,11 @@ if (!("TacticalTooltip" in ::ModMaxiTooltips)) {
     	return format("<span> <img src='coui://%s'/>  %i </span>", _img, _attributeCurrent);
     }
 
+	local function formatString2( _img, _attributeCurrent, _attributeCurrentReal)
+    {
+    	return format("<span> <img src='coui://%s'/>  %i(%i) </span>", _img, _attributeCurrent,_attributeCurrentReal);
+    }
+
     local ret = {
         id = _startID++,
         type = "text",
@@ -177,7 +182,12 @@ if (!("TacticalTooltip" in ::ModMaxiTooltips)) {
     ret.text += formatString("gfx/ui/icons/melee_skill.png", currentProperties.getMeleeSkill());
     ret.text += formatString("gfx/ui/icons/ranged_skill.png", currentProperties.getRangedSkill());
     ret.text += formatString("gfx/ui/icons/bravery.png", currentProperties.getBravery());
-    ret.text += formatString("gfx/ui/icons/melee_defense.png", currentProperties.getMeleeDefense());
+	local meleeDefense = currentProperties.getMeleeDefense();
+	if (meleeDefense<=50){		
+		ret.text += formatString("gfx/ui/icons/melee_defense.png",meleeDefense);
+	}else{
+		ret.text += formatString2("gfx/ui/icons/melee_defense.png", meleeDefense,(meleeDefense-50)/2+50);
+	}
     ret.text += formatString("gfx/ui/icons/ranged_defense.png", currentProperties.getRangedDefense());
     ret.text += formatString("gfx/ui/icons/initiative.png", entity.getInitiative());
 
