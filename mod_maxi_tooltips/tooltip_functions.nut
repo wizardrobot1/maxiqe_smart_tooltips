@@ -179,14 +179,20 @@ if (!("TacticalTooltip" in ::ModMaxiTooltips)) {
         rawHTMLInText = true
     };
 
-    ret.text += formatString("gfx/ui/icons/melee_skill.png", currentProperties.getMeleeSkill());
+	local skills = entity.getSkills().getAllSkillsOfType(::Const.SkillType.Active);
+	local meleeSkill = currentProperties.getMeleeSkill();
+	if (skills.len() != 0 && skills[0].m.HitChanceBonus > 0){
+    	ret.text += formatString2("gfx/ui/icons/melee_skill.png", meleeSkill,meleeSkill + skills[0].m.HitChanceBonus);
+	}else{
+    	ret.text += formatString("gfx/ui/icons/melee_skill.png", meleeSkill);
+	}
     ret.text += formatString("gfx/ui/icons/ranged_skill.png", currentProperties.getRangedSkill());
     ret.text += formatString("gfx/ui/icons/bravery.png", currentProperties.getBravery());
 	local meleeDefense = currentProperties.getMeleeDefense();
-	if (meleeDefense<=50){		
-		ret.text += formatString("gfx/ui/icons/melee_defense.png",meleeDefense);
+	if (meleeDefense>50){	
+		ret.text += formatString2("gfx/ui/icons/melee_defense.png", meleeDefense, (meleeDefense - 50) / 2 + 50);	
 	}else{
-		ret.text += formatString2("gfx/ui/icons/melee_defense.png", meleeDefense,(meleeDefense-50)/2+50);
+		ret.text += formatString("gfx/ui/icons/melee_defense.png", meleeDefense);
 	}
     ret.text += formatString("gfx/ui/icons/ranged_defense.png", currentProperties.getRangedDefense());
     ret.text += formatString("gfx/ui/icons/initiative.png", entity.getInitiative());
