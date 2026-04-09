@@ -180,12 +180,21 @@ if (!("TacticalTooltip" in ::ModMaxiTooltips)) {
     };
 
 	local skills = entity.getSkills().getAllSkillsOfType(::Const.SkillType.Active);
+	local maxHitChanceBonus = 0;
 	local meleeSkill = currentProperties.getMeleeSkill();
-	if (skills.len() != 0 && skills[0].m.HitChanceBonus > 0){
-    	ret.text += formatString2("gfx/ui/icons/melee_skill.png", meleeSkill,meleeSkill + skills[0].m.HitChanceBonus);
+
+	foreach( skill in skills )
+	{
+		if (skill.m.IsAttack && skill.m.IsUsingHitchance)
+			maxHitChanceBonus = ::Math.max(maxHitChanceBonus,skill.m.HitChanceBonus);
+	}
+
+	if (maxHitChanceBonus > 0){
+    	ret.text += formatString2("gfx/ui/icons/melee_skill.png", meleeSkill,meleeSkill + maxHitChanceBonus);
 	}else{
     	ret.text += formatString("gfx/ui/icons/melee_skill.png", meleeSkill);
 	}
+
     ret.text += formatString("gfx/ui/icons/ranged_skill.png", currentProperties.getRangedSkill());
     ret.text += formatString("gfx/ui/icons/bravery.png", currentProperties.getBravery());
 	local meleeDefense = currentProperties.getMeleeDefense();
